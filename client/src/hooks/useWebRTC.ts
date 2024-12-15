@@ -142,21 +142,50 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
   }, [peers]);
   
   useEffect(() => {
-    // Подключаемся к сигнальному серверу через WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/signal`);
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'peer-joined') {
-        connectToPeer(data.peerId);
-      } else {
-        handlePeerSignal(data);
-      }
+    let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout;
+
+    const connectWebSocket = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}/signal`);
+      
+      ws.onopen = () => {
+        console.log('Signal server connected');
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'peer-joined') {
+            connectToPeer(data.peerId);
+          } else {
+            handlePeerSignal(data);
+          }
+        } catch (error) {
+          console.error('WebSocket message error:', error);
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log('Signal server disconnected, attempting to reconnect...');
+        // Попытка переподключения через 5 секунд
+        reconnectTimer = setTimeout(connectWebSocket, 5000);
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        ws?.close();
+      };
     };
+
+    connectWebSocket();
     
     return () => {
-      ws.close();
+      if (ws) {
+        ws.close();
+        clearTimeout(reconnectTimer);
+      }
       peers.forEach((peer) => {
         peer.connection.close();
       });

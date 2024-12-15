@@ -26,25 +26,40 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
   
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    
     if (mining) {
-      const speedMultiplier = Math.max(1, onlineMiners / 2);
-      const interval = setInterval(() => {
-        setProgress(p => {
-          const increment = speedMultiplier * (Math.random() * 2 + 1);
-          const newProgress = p + increment > 100 ? 0 : p + increment;
-          
-          // Отправляем обновление прогресса другим майнерам
-          broadcast({ type: 'progress', value: newProgress, peerId: userId });
-          
-          return newProgress;
-        });
-      }, 50);
-      return () => clearInterval(interval);
+      // Начальное состояние майнинга
+      const startMining = () => {
+        const speedMultiplier = Math.max(1, onlineMiners / 2);
+        intervalId = setInterval(() => {
+          setProgress(p => {
+            const increment = speedMultiplier * (Math.random() * 2 + 1);
+            const newProgress = p + increment > 100 ? 0 : p + increment;
+            
+            try {
+              // Отправляем обновление прогресса другим майнерам
+              broadcast({ type: 'progress', value: newProgress, peerId: userId });
+            } catch (error) {
+              console.error('Failed to broadcast progress:', error);
+            }
+            
+            return newProgress;
+          });
+        }, 50);
+      };
+
+      startMining();
+
+      return () => {
+        if (intervalId) clearInterval(intervalId);
+      };
     } else {
       setProgress(0);
       setPeerProgress({});
+      if (intervalId) clearInterval(intervalId);
     }
-  }, [mining, onlineMiners, broadcast]);
+  }, [mining, onlineMiners, broadcast, userId]);
 
   return (
     <Card className="w-full max-w-md mx-auto bg-background/80 backdrop-blur border-muted">
@@ -52,18 +67,33 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
         <div className="flex justify-between items-center">
           <CardTitle>Mining Dashboard</CardTitle>
           <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>{onlineMiners} online</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>{onlineMiners} online</span>
               </div>
-              <span>{peers.length} P2P peers</span>
+              <div className="flex items-center gap-2 relative group">
+                <div className="relative">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
+                </div>
+                <span>{peers.length} P2P peers</span>
+                
+                {/* Tooltip со списком пиров */}
+                <div className="absolute hidden group-hover:block top-full left-0 mt-2 p-2 bg-black/80 backdrop-blur-sm rounded-lg shadow-lg z-10 min-w-[200px]">
+                  <div className="text-xs space-y-1">
+                    {peers.map((peerId) => (
+                      <div key={peerId} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                        <span className="font-mono">{peerId.slice(0, 8)}...</span>
+                      </div>
+                    ))}
+                    {peers.length === 0 && (
+                      <div className="text-muted-foreground">No active peers</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
         </div>
       </CardHeader>
       <CardContent>
