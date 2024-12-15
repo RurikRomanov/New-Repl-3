@@ -61,8 +61,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
 
         intervalId.current = setInterval(() => {
           setProgress(p => {
-            const increment = speedMultiplier * (Math.random() * 2 + 1);
-            const newProgress = p + increment > 100 ? 0 : p + increment;
+            const increment = speedMultiplier * (Math.random() * 0.5 + 0.1);
+            const newProgress = Math.min(p + increment, 100);
             
             try {
               // Отправляем обновление прогресса другим майнерам

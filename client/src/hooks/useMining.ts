@@ -8,6 +8,7 @@ export function useMining(userId: string) {
   const [onlineMiners, setOnlineMiners] = useState(1);
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
+  const [currentHashrate, setCurrentHashrate] = useState(0); // Added state for current hashrate
   const { toast } = useToast();
   const { broadcast, peers } = useWebRTC(userId, (data) => {
     if (!data) return;
@@ -73,6 +74,7 @@ export function useMining(userId: string) {
       setWorker(null);
     }
     setMining(false);
+    setCurrentHashrate(0); // Reset hashrate on stop
   }, [worker]);
 
   useEffect(() => {
@@ -89,6 +91,42 @@ export function useMining(userId: string) {
     const interval = setInterval(fetchBlock, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const estimateHashrate = async () => {
+    const iterations = 10000;
+    const testData = "test_block_data";
+    const startTime = performance.now();
+    const encoder = new TextEncoder();
+
+    const promises = Array.from({ length: iterations }, (_, i) => 
+      crypto.subtle.digest('SHA-256', encoder.encode(testData + i))
+    );
+
+    await Promise.all(promises);
+    const endTime = performance.now();
+    const timeInSeconds = (endTime - startTime) / 1000;
+    const hashrate = iterations / timeInSeconds / 1000000; // Convert to MH/s
+    return Math.min(hashrate, 100); // Cap at 100 MH/s for realistic display
+  };
+
+  const updateHashrate = useCallback(async () => {
+    if (mining) {
+      const rate = await estimateHashrate();
+      setCurrentHashrate(rate);
+      broadcast({ type: 'hashrate', value: rate, peerId: userId });
+    }
+  }, [mining, broadcast, userId]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (mining) {
+      updateHashrate();
+      interval = setInterval(updateHashrate, 2000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [mining, updateHashrate]);
 
   useEffect(() => {
     const wsConnect = () => {
@@ -123,18 +161,54 @@ export function useMining(userId: string) {
 
     const ws = wsConnect();
     
+    const handleSocketMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
+          case 'onlineMiners':
+            setOnlineMiners(data.count);
+            break;
+          case 'peer-joined':
+            console.log('New peer joined:', data.peerId);
+            break;
+          case 'hashrate':
+            if (data.peerId !== userId) {
+              setPeerHashrates(prev => ({
+                ...prev,
+                [data.peerId]: data.value
+              }));
+            }
+            break;
+          case 'progress':
+            if (data.peerId !== userId) {
+              setPeerProgress(prev => ({
+                ...prev,
+                [data.peerId]: data.value
+              }));
+            }
+            break;
+        }
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
+    };
+
     ws.onopen = () => {
+      console.log('WebSocket connected');
       ws.send(JSON.stringify({ type: 'register', minerId: userId }));
     };
     
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'onlineMiners') {
-        setOnlineMiners(data.count);
-      }
+    ws.onmessage = handleSocketMessage;
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setTimeout(wsConnect, 5000);
     };
     
-    return () => ws.close();
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
   }, [userId]);
 
   return {
@@ -144,6 +218,7 @@ export function useMining(userId: string) {
     stopMining,
     onlineMiners,
     peers,
-    broadcast
+    broadcast,
+    currentHashrate // Added currentHashrate to the returned object
   };
 }
