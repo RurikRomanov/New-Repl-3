@@ -2,6 +2,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { MiningDashboard } from "../components/MiningDashboard";
 import { LeaderboardTable } from "../components/LeaderboardTable";
 import { UserStats } from "../components/UserStats";
+import { BlockHistory } from "../components/BlockHistory";
 
 export function Home() {
   const { user } = useTelegram();
