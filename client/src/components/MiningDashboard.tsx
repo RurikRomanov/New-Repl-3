@@ -24,7 +24,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   const intervalId = useRef<NodeJS.Timeout>();
   const hashrateIntervalId = useRef<NodeJS.Timeout>();
   const { impactOccurred } = useHapticFeedback();
-  const { notificationOccurred } = useToast();
+  const { notificationOccurred } = useHapticFeedback();
 
 
   useEffect(() => {
@@ -274,13 +274,21 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
             onClick={() => {
               impactOccurred('medium');
               if (mining) {
-                notificationOccurred('warning');
+                toast({
+                  title: "Mining Stopped",
+                  description: "Mining process has been stopped",
+                  variant: "destructive"
+                });
                 stopMining();
                 window.dispatchEvent(new CustomEvent('mining-state-changed', {
                   detail: { mining: false }
                 }));
               } else {
-                notificationOccurred('success');
+                toast({
+                  title: "Mining Started",
+                  description: "Mining process has begun",
+                  variant: "default"
+                });
                 startMining();
                 window.dispatchEvent(new CustomEvent('mining-state-changed', {
                   detail: { mining: true }
