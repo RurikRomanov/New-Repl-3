@@ -68,8 +68,37 @@ export function useMining(userId: string) {
   }, []);
 
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+    const wsConnect = () => {
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${protocol}//${window.location.host}`);
+        
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+          ws.send(JSON.stringify({ type: 'register', minerId: userId }));
+        };
+        
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'onlineMiners') {
+            setOnlineMiners(data.count);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          setTimeout(wsConnect, 5000); // Попытка переподключения через 5 секунд
+        };
+        
+        return ws;
+      } catch (error) {
+        console.error('WebSocket connection error:', error);
+        setTimeout(wsConnect, 5000);
+        return null;
+      }
+    };
+
+    const ws = wsConnect();
     
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'register', minerId: userId }));
