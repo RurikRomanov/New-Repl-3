@@ -30,7 +30,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   }, [mining, onlineMiners]);
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-black/60 backdrop-blur-sm border-slate-800">
+    <Card className="w-full max-w-md mx-auto bg-background/80 backdrop-blur border-muted">
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Mining Dashboard</CardTitle>

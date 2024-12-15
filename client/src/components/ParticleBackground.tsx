@@ -57,7 +57,7 @@ export function ParticleBackground() {
 
     const animate = () => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 1)';
       ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
       particles.current.forEach((particle) => {
@@ -72,7 +72,7 @@ export function ParticleBackground() {
 
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(64, 156, 255, ${particle.opacity})`;
+        ctx.fillStyle = `rgba(64, 156, 255, ${particle.opacity * 0.15})`;
         ctx.fill();
       });
 
