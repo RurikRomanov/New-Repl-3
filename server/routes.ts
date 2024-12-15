@@ -1,61 +1,73 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocket, WebSocketServer } from "ws";
 import { db } from "@db";
 import { users, blocks, rewards } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import crypto from "crypto";
+import { log } from "./vite";
 
-import { WebSocketServer } from 'ws';
+interface Client {
+  ws: WebSocket;
+  minerId: string;
+}
 
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
-  const wss = new WebSocketServer({ 
-    server: httpServer,
-    verifyClient: (info) => {
-      // Игнорируем Vite HMR WebSocket подключения
-      return !info.req.headers['sec-websocket-protocol']?.includes('vite-hmr');
+  const wss = new WebSocketServer({ noServer: true });
+  const clients = new Map<string, Client>();
+
+  // WebSocket upgrade handling
+  httpServer.on("upgrade", (request, socket, head) => {
+    // Skip Vite HMR requests
+    if (request.headers["sec-websocket-protocol"] === "vite-hmr") {
+      return;
     }
-  });
-  
-  const onlineMiners = new Set<string>();
-  
-  wss.on('connection', (ws) => {
-    let minerId: string | null = null;
 
-    ws.on('message', (message: string) => {
-      const data = JSON.parse(message);
-      if (data.type === 'register') {
-        minerId = data.minerId;
-        onlineMiners.add(minerId);
-        // Broadcast online miners count
-        wss.clients.forEach(client => {
-          client.send(JSON.stringify({
-            type: 'onlineMiners',
-            count: onlineMiners.size
-          }));
-        });
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  });
+
+  wss.on("connection", (ws) => {
+    ws.on("message", (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.type === "register" && data.minerId) {
+          clients.set(data.minerId, { ws, minerId: data.minerId });
+          broadcastMiners();
+        }
+      } catch (error) {
+        log("WebSocket error:", error);
       }
     });
 
-    ws.on('close', () => {
-      if (minerId) {
-        onlineMiners.delete(minerId);
-        // Broadcast updated count
-        wss.clients.forEach(client => {
-          client.send(JSON.stringify({
-            type: 'onlineMiners',
-            count: onlineMiners.size
-          }));
-        });
+    ws.on("close", () => {
+      for (const [id, client] of clients) {
+        if (client.ws === ws) {
+          clients.delete(id);
+          broadcastMiners();
+          break;
+        }
       }
     });
   });
+
+  function broadcastMiners() {
+    const message = JSON.stringify({
+      type: "onlineMiners",
+      count: clients.size
+    });
+
+    for (const client of clients.values()) {
+      client.ws.send(message);
+    }
+  }
 
   // Auth verification
   app.post("/api/auth/verify", async (req, res) => {
     const { initData } = req.body;
     try {
-      // Parse initData from Telegram
       const data = JSON.parse(initData);
       const user = data.user;
       
@@ -86,7 +98,7 @@ export function registerRoutes(app: Express): Server {
       // Create new block
       const newBlock = {
         hash: crypto.randomBytes(32).toString('hex'),
-        difficulty: 6, // Increased difficulty
+        difficulty: 6,
         status: "mining"
       };
       
@@ -173,8 +185,6 @@ export function registerRoutes(app: Express): Server {
     res.json(leaderboard);
   });
 
-  // Get user stats
-  // Get block history
   // Get block rewards
   app.get("/api/blocks/:id/rewards", async (req, res) => {
     try {
@@ -188,6 +198,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get block history
   app.get("/api/blocks/history", async (req, res) => {
     try {
       const history = await db.query.blocks.findMany({
@@ -202,6 +213,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get user stats
   app.get("/api/stats/user/:id", async (req, res) => {
     const user = await db.query.users.findFirst({
       where: eq(users.telegramId, req.params.id)
