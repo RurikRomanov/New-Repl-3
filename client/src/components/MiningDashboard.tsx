@@ -95,6 +95,30 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
     }
   }, [mining, onlineMiners, broadcast, userId]);
 
+  // Оценка хэшрейта устройства (MH/s)
+  const estimateHashrate = () => {
+    const iterations = 1000;
+    const testData = "test_block_data";
+    const startTime = performance.now();
+    
+    for (let i = 0; i < iterations; i++) {
+      crypto.subtle.digest('SHA-256', new TextEncoder().encode(testData + i));
+    }
+    
+    const endTime = performance.now();
+    const timeInSeconds = (endTime - startTime) / 1000;
+    const hashrate = iterations / timeInSeconds / 1000000; // Convert to MH/s
+    return hashrate;
+  };
+
+  // Расчет примерного времени майнинга
+  const calculateEstimatedTime = (hashrate: number, difficulty: number, activePeers: number) => {
+    const targetHashes = Math.pow(2, difficulty);
+    const totalHashrate = hashrate * (1 + (activePeers * 0.8)); // Учитываем бонус от пиров
+    const estimatedSeconds = targetHashes / (totalHashrate * 1000000);
+    return estimatedSeconds;
+  };
+
   return (
     <Card className="w-full max-w-md mx-auto bg-background/80 backdrop-blur border-muted">
       <CardHeader>
@@ -207,6 +231,38 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {!mining && (
+            <div className="space-y-4 mb-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Estimated Hashrate</span>
+                <span className="text-sm text-muted-foreground">
+                  {estimateHashrate().toFixed(2)} MH/s
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Est. Mining Time</span>
+                <span className="text-sm text-muted-foreground">
+                  {(() => {
+                    const hashrate = estimateHashrate();
+                    const activePeers = Object.entries(peerStatus).filter(([_, status]) => status).length;
+                    const time = calculateEstimatedTime(hashrate, currentBlock?.difficulty || 0, activePeers);
+                    return time > 60 
+                      ? `${(time / 60).toFixed(1)} min`
+                      : `${time.toFixed(1)} sec`;
+                  })()}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Network Boost</span>
+                <span className="text-sm text-muted-foreground">
+                  x{(1 + (Object.entries(peerStatus).filter(([_, status]) => status).length * 0.8)).toFixed(1)}
+                </span>
+              </div>
             </div>
           )}
 
