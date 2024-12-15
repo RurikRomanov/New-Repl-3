@@ -62,7 +62,33 @@ export function registerRoutes(app: Express): Server {
     for (const client of clients.values()) {
       client.ws.send(message);
     }
+    
+    // Уведомляем всех о новом пире для WebRTC
+    const minerIds = Array.from(clients.keys());
+    for (const client of clients.values()) {
+      minerIds.forEach(peerId => {
+        if (peerId !== client.minerId) {
+          client.ws.send(JSON.stringify({
+            type: 'peer-joined',
+            peerId
+          }));
+        }
+      });
+    }
   }
+
+  // Обработка WebRTC сигналов
+  app.post("/api/signal", (req, res) => {
+    const { type, from, to, offer, answer, candidate } = req.body;
+    const targetClient = clients.get(to);
+    
+    if (!targetClient) {
+      return res.status(404).json({ error: "Peer not found" });
+    }
+    
+    targetClient.ws.send(JSON.stringify({ type, from, offer, answer, candidate }));
+    res.json({ success: true });
+  });
 
   // Auth verification
   app.post("/api/auth/verify", async (req, res) => {

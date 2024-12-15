@@ -12,8 +12,10 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
+  const { broadcast, peers } = useWebRTC(userId);
   const { impactOccurred, notificationOccurred } = useHapticFeedback();
   const [progress, setProgress] = useState(0);
+  const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
   
   useEffect(() => {
     if (mining) {
