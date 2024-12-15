@@ -13,48 +13,21 @@ interface MiningDashboardProps {
 }
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
-  const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
+  const { mining, currentBlock, startMining, stopMining, onlineMiners, peers, broadcast } = useMining(userId);
   const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
   const [peerStatus, setPeerStatus] = useState<Record<string, boolean>>({});
-  
-  const { broadcast, peers } = useWebRTC(userId, (message: any) => {
-    switch (message.type) {
-      case 'progress':
-        setPeerProgress(prev => ({
-          ...prev,
-          [message.peerId]: message.value
-        }));
-        break;
-      case 'hashrate':
-        setPeerHashrates(prev => ({
-          ...prev,
-          [message.peerId]: message.value
-        }));
-        break;
-      case 'status':
-        setPeerStatus(prev => ({
-          ...prev,
-          [message.peerId]: message.mining
-        }));
-        break;
-      case 'solution_found':
-        notificationOccurred('success');
-        impactOccurred('heavy');
-        toast({
-          title: "Solution Found!",
-          description: `Peer ${message.peerId.slice(0, 8)}... found a solution!`
-        });
-        break;
-    }
-  });
-  const { impactOccurred, notificationOccurred } = useHapticFeedback();
   const [progress, setProgress] = useState(0);
   const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
+  const [currentHashrate, setCurrentHashrate] = useState(0);
+  const [estimatedTime, setEstimatedTime] = useState('');
   const { toast } = useToast();
   const intervalId = useRef<NodeJS.Timeout>();
-  
+  const hashrateIntervalId = useRef<NodeJS.Timeout>();
+  const { impactOccurred } = useHapticFeedback();
+  const { notificationOccurred } = useToast();
+
+
   useEffect(() => {
-    
     if (mining) {
       // Начальное состояние майнинга
       const startMining = () => {
@@ -65,6 +38,26 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
         window.dispatchEvent(new CustomEvent('miners-count-changed', { 
           detail: { count: activePeers + 1 } // +1 for current miner
         }));
+
+        // Обновление хэшрейта каждую секунду
+        hashrateIntervalId.current = setInterval(() => {
+          const currentHashrate = estimateHashrate();
+          setCurrentHashrate(currentHashrate);
+          
+          const time = calculateEstimatedTime(
+            currentHashrate,
+            currentBlock?.difficulty || 0,
+            activePeers
+          );
+          
+          setEstimatedTime(time > 60 
+            ? `${(time / 60).toFixed(1)} min`
+            : `${time.toFixed(1)} sec`
+          );
+          
+          // Отправляем обновление хэшрейта другим майнерам
+          broadcast({ type: 'hashrate', value: currentHashrate, peerId: userId });
+        }, 1000);
 
         intervalId.current = setInterval(() => {
           setProgress(p => {
@@ -87,24 +80,28 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
 
       return () => {
         if (intervalId.current) clearInterval(intervalId.current);
+        if (hashrateIntervalId.current) clearInterval(hashrateIntervalId.current);
       };
     } else {
       setProgress(0);
       setPeerProgress({});
+      setCurrentHashrate(0);
+      setEstimatedTime('');
       if (intervalId.current) clearInterval(intervalId.current);
+      if (hashrateIntervalId.current) clearInterval(hashrateIntervalId.current);
     }
-  }, [mining, onlineMiners, broadcast, userId]);
+  }, [mining, onlineMiners, broadcast, userId, currentBlock]);
 
   // Оценка хэшрейта устройства (MH/s)
   const estimateHashrate = () => {
     const iterations = 1000;
     const testData = "test_block_data";
     const startTime = performance.now();
-    
+
     for (let i = 0; i < iterations; i++) {
       crypto.subtle.digest('SHA-256', new TextEncoder().encode(testData + i));
     }
-    
+
     const endTime = performance.now();
     const timeInSeconds = (endTime - startTime) / 1000;
     const hashrate = iterations / timeInSeconds / 1000000; // Convert to MH/s
@@ -112,6 +109,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   };
 
   // Расчет примерного времени майнинга
+  useEffect(() => {
+    if (mining && currentBlock && currentHashrate > 0) {
+      const activePeers = Object.entries(peerStatus).filter(([_, status]) => status).length;
+      const time = calculateEstimatedTime(currentHashrate, currentBlock.difficulty, activePeers);
+      setEstimatedTime(time > 60 ? `${(time / 60).toFixed(1)} min` : `${time.toFixed(1)} sec`);
+    }
+  }, [mining, currentBlock, currentHashrate, peerStatus]);
+
   const calculateEstimatedTime = (hashrate: number, difficulty: number, activePeers: number) => {
     const targetHashes = Math.pow(2, difficulty);
     const totalHashrate = hashrate * (1 + (activePeers * 0.8)); // Учитываем бонус от пиров
@@ -125,40 +130,40 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
         <div className="flex justify-between items-center">
           <CardTitle>Mining Dashboard</CardTitle>
           <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>{onlineMiners} online</span>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>{onlineMiners} online</span>
+            </div>
+            <div className="flex items-center gap-2 relative group">
+              <div className="relative">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
               </div>
-              <div className="flex items-center gap-2 relative group">
-                <div className="relative">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
-                </div>
-                <span>{peers.length} P2P peers</span>
-                
-                {/* Tooltip со списком пиров */}
-                <div className="absolute hidden group-hover:block top-full left-0 mt-2 p-2 bg-black/80 backdrop-blur-sm rounded-lg shadow-lg z-10 min-w-[200px]">
-                  <div className="text-xs space-y-1">
-                    {peers.map((peerId) => (
-                      <div key={peerId} className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${peerStatus[peerId] ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                          <span className="font-mono">{peerId.slice(0, 8)}...</span>
-                          {peerHashrates[peerId] && (
-                            <span className="text-xs text-muted-foreground">
-                              {Math.round(peerHashrates[peerId])} H/s
-                            </span>
-                          )}
-                        </div>
+              <span>{peers.length} P2P peers</span>
+
+              {/* Tooltip со списком пиров */}
+              <div className="absolute hidden group-hover:block top-full left-0 mt-2 p-2 bg-black/80 backdrop-blur-sm rounded-lg shadow-lg z-10 min-w-[200px]">
+                <div className="text-xs space-y-1">
+                  {peers.map((peerId) => (
+                    <div key={peerId} className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-1.5 h-1.5 rounded-full ${peerStatus[peerId] ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                        <span className="font-mono">{peerId.slice(0, 8)}...</span>
+                        {peerHashrates[peerId] && (
+                          <span className="text-xs text-muted-foreground">
+                            {Math.round(peerHashrates[peerId])} H/s
+                          </span>
+                        )}
                       </div>
-                    ))}
-                    {peers.length === 0 && (
-                      <div className="text-muted-foreground">No active peers</div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
+                  {peers.length === 0 && (
+                    <div className="text-muted-foreground">No active peers</div>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -186,14 +191,19 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                     Boost: x{Object.entries(peerStatus).filter(([_, status]) => status).length + 1}
                   </span>
                 </div>
-                <Progress 
-                  value={progress} 
+                
+                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                  <span>Current Hashrate: {currentHashrate.toFixed(2)} MH/s</span>
+                  <span>Est. Time: {estimatedTime}</span>
+                </div>
+                <Progress
+                  value={progress}
                   className="h-2 relative overflow-hidden"
                   style={{
                     background: 'rgba(255,255,255,0.1)',
                   }}
                 >
-                  <div 
+                  <div
                     className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 animate-pulse"
                     style={{
                       width: `${progress}%`,
@@ -202,7 +212,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                   />
                 </Progress>
               </div>
-              
+
               {Object.entries(peerProgress).length > 0 && (
                 <div className="space-y-2">
                   <span className="text-sm font-medium">Peer Progress</span>
@@ -212,14 +222,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                         <span>Peer {peerId.slice(0, 8)}...</span>
                         <span>{Math.round(value)}%</span>
                       </div>
-                      <Progress 
-                        value={value} 
+                      <Progress
+                        value={value}
                         className="h-1.5 relative overflow-hidden"
                         style={{
                           background: 'rgba(255,255,255,0.05)',
                         }}
                       >
-                        <div 
+                        <div
                           className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"
                           style={{
                             width: `${value}%`,
@@ -242,21 +252,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                   {estimateHashrate().toFixed(2)} MH/s
                 </span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Est. Mining Time</span>
                 <span className="text-sm text-muted-foreground">
-                  {(() => {
-                    const hashrate = estimateHashrate();
-                    const activePeers = Object.entries(peerStatus).filter(([_, status]) => status).length;
-                    const time = calculateEstimatedTime(hashrate, currentBlock?.difficulty || 0, activePeers);
-                    return time > 60 
-                      ? `${(time / 60).toFixed(1)} min`
-                      : `${time.toFixed(1)} sec`;
-                  })()}
+                  {estimatedTime || 'Not estimated yet'}
                 </span>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Network Boost</span>
                 <span className="text-sm text-muted-foreground">
@@ -273,14 +276,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
               if (mining) {
                 notificationOccurred('warning');
                 stopMining();
-                window.dispatchEvent(new CustomEvent('mining-state-changed', { 
-                  detail: { mining: false } 
+                window.dispatchEvent(new CustomEvent('mining-state-changed', {
+                  detail: { mining: false }
                 }));
               } else {
                 notificationOccurred('success');
                 startMining();
-                window.dispatchEvent(new CustomEvent('mining-state-changed', { 
-                  detail: { mining: true } 
+                window.dispatchEvent(new CustomEvent('mining-state-changed', {
+                  detail: { mining: true }
                 }));
               }
             }}
