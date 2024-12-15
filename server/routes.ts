@@ -10,6 +10,8 @@ import { log } from "./vite";
 interface Client {
   ws: WebSocket;
   minerId: string;
+  connectedAt: Date;
+  lastActive: Date;
 }
 
 export function registerRoutes(app: Express): Server {
@@ -34,7 +36,13 @@ export function registerRoutes(app: Express): Server {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === "register" && data.minerId) {
-          clients.set(data.minerId, { ws, minerId: data.minerId });
+          const now = new Date();
+          clients.set(data.minerId, { 
+            ws, 
+            minerId: data.minerId,
+            connectedAt: now,
+            lastActive: now
+          });
           broadcastMiners();
         }
       } catch (error) {
@@ -168,10 +176,31 @@ export function registerRoutes(app: Express): Server {
         })
         .where(eq(blocks.id, blockId));
 
-      // Distribute rewards
-      const totalReward = 100;
-      const minerReward = Math.floor(totalReward * 0.6);
-      const participantReward = Math.floor(totalReward * 0.4);
+      // Calculate dynamic block reward based on difficulty and time
+      const miningDuration = new Date().getTime() - new Date(block.createdAt).getTime();
+      const difficultyMultiplier = Math.pow(2, block.difficulty - 1);
+      const baseReward = 100;
+      
+      // Reward increases with difficulty but decreases if mining took too long
+      const totalReward = Math.floor(
+        baseReward * difficultyMultiplier * 
+        Math.max(0.5, Math.min(2, 300000 / miningDuration)) // 5 minutes optimal time
+      );
+
+      // Calculate active miners bonus
+      const activeMiners = Array.from(clients.values()).length;
+      const networkBonus = Math.min(2, 1 + (activeMiners - 1) * 0.1); // Up to 2x bonus for 10+ miners
+
+      // Adjusted rewards with network bonus
+      const adjustedReward = Math.floor(totalReward * networkBonus);
+      
+      // Progressive reward distribution
+      // Miner gets 40-70% based on network size
+      const minerShare = Math.max(0.4, Math.min(0.7, 0.7 - (activeMiners - 1) * 0.03));
+      const minerReward = Math.floor(adjustedReward * minerShare);
+      
+      // Rest is distributed among participants based on their online time
+      const participantReward = adjustedReward - minerReward;
 
       // Miner reward
       await db.insert(rewards).values({
@@ -181,19 +210,22 @@ export function registerRoutes(app: Express): Server {
         type: "miner"
       });
 
-      // Distribute participant rewards
-      const activeUsers = await db.query.users.findMany();
-      const otherUsers = activeUsers.filter(u => u.telegramId !== minerId);
+      // Get online time statistics for fair distribution
+      const onlineUsers = Array.from(clients.values())
+        .filter(client => client.minerId !== minerId);
       
-      const perUserReward = Math.floor(participantReward / otherUsers.length);
-      
-      for (const user of otherUsers) {
-        await db.insert(rewards).values({
-          blockId,
-          userId: user.telegramId,
-          amount: perUserReward,
-          type: "participant"
-        });
+      if (onlineUsers.length > 0) {
+        const perUserReward = Math.floor(participantReward / onlineUsers.length);
+        
+        // Distribute rewards to active participants
+        for (const user of onlineUsers) {
+          await db.insert(rewards).values({
+            blockId,
+            userId: user.minerId,
+            amount: perUserReward,
+            type: "participant"
+          });
+        }
       }
 
       res.json({ success: true });
