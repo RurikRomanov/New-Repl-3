@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCurrentBlock, submitSolution } from '../lib/api';
 import { useToast } from './use-toast';
+import { useEnergy } from '../contexts/EnergyContext';
 
 export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
-  const [energy, setEnergy] = useState(100);
+  const { energy, setEnergy } = useEnergy();
   const { toast } = useToast();
 
   const startMining = useCallback(() => {
