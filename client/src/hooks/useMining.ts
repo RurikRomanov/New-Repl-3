@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCurrentBlock, submitSolution } from '../lib/api';
 import { useToast } from './use-toast';
+import { useWebRTC } from './useWebRTC';
 
 export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
@@ -9,8 +10,26 @@ export function useMining(userId: string) {
   const [worker, setWorker] = useState<Worker | null>(null);
   const { toast } = useToast();
   const { broadcast, peers } = useWebRTC(userId, (data) => {
-    // Handle WebRTC messages here
-    console.log('Received WebRTC message:', data);
+    if (!data) return;
+    
+    switch (data.type) {
+      case 'progress':
+        // Handle progress updates from peers
+        break;
+      case 'hashrate':
+        // Handle hashrate updates from peers
+        break;
+      case 'solution_found':
+        // Handle when a peer finds a solution
+        if (mining) {
+          stopMining();
+          toast({
+            title: "Block Mined",
+            description: "Another miner found the solution"
+          });
+        }
+        break;
+    }
   });
 
   const startMining = useCallback(() => {
