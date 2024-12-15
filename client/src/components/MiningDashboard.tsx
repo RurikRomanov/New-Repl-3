@@ -11,6 +11,7 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
+  const { impactOccurred, notificationOccurred } = useHapticFeedback();
   const [progress, setProgress] = useState(0);
   
   useEffect(() => {
@@ -83,7 +84,16 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
 
           <Button
             className="w-full"
-            onClick={mining ? stopMining : startMining}
+            onClick={() => {
+              impactOccurred('medium');
+              if (mining) {
+                notificationOccurred('warning');
+                stopMining();
+              } else {
+                notificationOccurred('success');
+                startMining();
+              }
+            }}
             variant={mining ? "destructive" : "default"}
           >
             {mining ? "Stop Mining" : "Start Mining"}
