@@ -7,6 +7,7 @@ import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import { EnergyProvider } from "./contexts/EnergyContext";
 import { ParticleBackground } from "./components/ParticleBackground";
+import { useAppHaptics } from "./hooks/useAppHaptics";
 
 declare global {
   interface Window {
@@ -25,6 +26,7 @@ declare global {
 
 function App() {
   const [location, setLocation] = useLocation();
+  useAppHaptics();
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;

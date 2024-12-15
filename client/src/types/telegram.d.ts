@@ -34,6 +34,8 @@ interface TelegramWebApp {
       button_color: string;
       button_text_color: string;
     };
+    onEvent: (eventName: 'viewportChanged', callback: () => void) => void;
+    offEvent: (eventName: 'viewportChanged', callback: () => void) => void;
   };
 }
 
