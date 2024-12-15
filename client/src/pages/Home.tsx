@@ -19,6 +19,7 @@ export function Home() {
       <MiningDashboard userId={user.id.toString()} />
       <UserStats userId={user.id.toString()} />
       <LeaderboardTable />
+      <BlockHistory />
     </div>
   );
 }

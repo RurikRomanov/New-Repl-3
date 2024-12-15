@@ -43,7 +43,7 @@ export function registerRoutes(app: Express): Server {
       // Create new block
       const newBlock = {
         hash: crypto.randomBytes(32).toString('hex'),
-        difficulty: 4, // Adjust based on network
+        difficulty: 6, // Increased difficulty
         status: "mining"
       };
       
@@ -131,6 +131,21 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get user stats
+  // Get block history
+  app.get("/api/blocks/history", async (req, res) => {
+    try {
+      const history = await db.query.blocks.findMany({
+        orderBy: desc(blocks.id),
+        limit: 10,
+        where: eq(blocks.status, "completed")
+      });
+      res.json(history);
+    } catch (error) {
+      console.error('Failed to fetch block history:', error);
+      res.status(500).json({ error: "Failed to fetch block history" });
+    }
+  });
+
   app.get("/api/stats/user/:id", async (req, res) => {
     const user = await db.query.users.findFirst({
       where: eq(users.telegramId, req.params.id)
