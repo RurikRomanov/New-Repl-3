@@ -10,37 +10,23 @@ interface MiningDashboardProps {
 }
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
-  const { mining, currentBlock, startMining, stopMining } = useMining(userId);
+  const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
   const [progress, setProgress] = useState(0);
-  const [onlineMiners, setOnlineMiners] = useState(1);
-  
-  useEffect(() => {
-    const ws = new WebSocket(`ws://${window.location.host}`);
-    
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'register', minerId: userId }));
-    };
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'onlineMiners') {
-        setOnlineMiners(data.count);
-      }
-    };
-    
-    return () => ws.close();
-  }, [userId]);
   
   useEffect(() => {
     if (mining) {
+      const speedMultiplier = Math.max(1, onlineMiners / 2); // Ускорение от количества майнеров
       const interval = setInterval(() => {
-        setProgress(p => (p + 1) % 100);
+        setProgress(p => {
+          const increment = speedMultiplier * (Math.random() * 2 + 1); // Случайное увеличение для анимации
+          return p + increment > 100 ? 0 : p + increment;
+        });
       }, 50);
       return () => clearInterval(interval);
     } else {
       setProgress(0);
     }
-  }, [mining]);
+  }, [mining, onlineMiners]);
 
   return (
     <Card className="w-full max-w-md mx-auto bg-black/60 backdrop-blur-sm border-slate-800">
@@ -77,7 +63,21 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                   Boost: x{onlineMiners}
                 </span>
               </div>
-              <Progress value={progress} className="h-2" />
+              <Progress 
+            value={progress} 
+            className="h-2 relative overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+            }}
+          >
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 animate-pulse"
+              style={{
+                width: `${progress}%`,
+                transition: 'width 0.1s ease-out'
+              }}
+            />
+          </Progress>
             </div>
           )}
 

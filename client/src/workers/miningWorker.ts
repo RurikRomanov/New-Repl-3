@@ -10,7 +10,8 @@ self.onmessage = async (e: MessageEvent) => {
   const target = "0".repeat(difficulty);
   
   let nonce = 0;
-  const iterationsPerCheck = Math.max(100, Math.floor(1000 / onlineMiners));
+  const baseDelay = 100; // Базовая задержка в мс
+  const minDelay = 10; // Минимальная задержка
   
   while (true) {
     const nonceStr = nonce.toString(16).padStart(8, '0');
@@ -23,9 +24,10 @@ self.onmessage = async (e: MessageEvent) => {
     
     nonce++;
     
-    // Adjust delay based on online miners
-    if (nonce % iterationsPerCheck === 0) {
-      await new Promise(resolve => setTimeout(resolve, 0));
+    // Динамическая задержка на основе количества майнеров
+    if (nonce % 100 === 0) {
+      const delay = Math.max(minDelay, Math.floor(baseDelay / onlineMiners));
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 };
