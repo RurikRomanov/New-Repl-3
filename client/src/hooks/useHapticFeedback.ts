@@ -2,20 +2,42 @@ import { useCallback } from 'react';
 
 export function useHapticFeedback() {
   const impactOccurred = useCallback((style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-    window.Telegram?.WebApp.HapticFeedback.impactOccurred(style);
+    try {
+      window.Telegram?.WebApp.HapticFeedback.impactOccurred(style);
+    } catch (error) {
+      console.warn('Haptic feedback not supported');
+    }
   }, []);
 
   const notificationOccurred = useCallback((type: 'error' | 'success' | 'warning') => {
-    window.Telegram?.WebApp.HapticFeedback.notificationOccurred(type);
+    try {
+      window.Telegram?.WebApp.HapticFeedback.notificationOccurred(type);
+    } catch (error) {
+      console.warn('Haptic feedback not supported');
+    }
   }, []);
 
   const selectionChanged = useCallback(() => {
-    window.Telegram?.WebApp.HapticFeedback.selectionChanged();
+    try {
+      window.Telegram?.WebApp.HapticFeedback.selectionChanged();
+    } catch (error) {
+      console.warn('Haptic feedback not supported');
+    }
   }, []);
+
+  const tabSelected = useCallback(() => {
+    try {
+      impactOccurred('light');
+      selectionChanged();
+    } catch (error) {
+      console.warn('Haptic feedback not supported');
+    }
+  }, [impactOccurred, selectionChanged]);
 
   return {
     impactOccurred,
     notificationOccurred,
-    selectionChanged
+    selectionChanged,
+    tabSelected
   };
 }

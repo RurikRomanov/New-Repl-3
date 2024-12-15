@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Users } from "lucide-react";
 import { useMining } from "../hooks/useMining";
 import { useState, useEffect } from "react";
+import { useHapticFeedback } from "../hooks/useHapticFeedback";
 
 interface MiningDashboardProps {
   userId: string;
