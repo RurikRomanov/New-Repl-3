@@ -8,6 +8,10 @@ export function useMining(userId: string) {
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
   const { toast } = useToast();
+  const { broadcast, peers } = useWebRTC(userId, (data) => {
+    // Handle WebRTC messages here
+    console.log('Received WebRTC message:', data);
+  });
 
   const startMining = useCallback(() => {
     if (!currentBlock || mining) return;
@@ -119,6 +123,8 @@ export function useMining(userId: string) {
     currentBlock,
     startMining,
     stopMining,
-    onlineMiners
+    onlineMiners,
+    peers,
+    broadcast
   };
 }
