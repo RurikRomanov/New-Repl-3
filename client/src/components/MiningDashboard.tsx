@@ -3,9 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users } from "lucide-react";
 import { useMining } from "../hooks/useMining";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useWebRTC } from "../hooks/useWebRTC";
+import { useToast } from "@/hooks/use-toast";
 
 interface MiningDashboardProps {
   userId: string;
@@ -49,9 +50,10 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { impactOccurred, notificationOccurred } = useHapticFeedback();
   const [progress, setProgress] = useState(0);
   const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
+  const { toast } = useToast();
+  const intervalId = useRef<NodeJS.Timeout>();
   
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
     
     if (mining) {
       // Начальное состояние майнинга
@@ -64,7 +66,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
           detail: { count: activePeers + 1 } // +1 for current miner
         }));
 
-        intervalId = setInterval(() => {
+        intervalId.current = setInterval(() => {
           setProgress(p => {
             const increment = speedMultiplier * (Math.random() * 2 + 1);
             const newProgress = p + increment > 100 ? 0 : p + increment;
@@ -84,12 +86,12 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
       startMining();
 
       return () => {
-        if (intervalId) clearInterval(intervalId);
+        if (intervalId.current) clearInterval(intervalId.current);
       };
     } else {
       setProgress(0);
       setPeerProgress({});
-      if (intervalId) clearInterval(intervalId);
+      if (intervalId.current) clearInterval(intervalId.current);
     }
   }, [mining, onlineMiners, broadcast, userId]);
 
