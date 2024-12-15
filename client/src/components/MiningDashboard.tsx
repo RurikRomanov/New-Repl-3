@@ -13,12 +13,37 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
-  const { broadcast, peers } = useWebRTC(userId, (message: { type: string; value: number; peerId: string }) => {
-    if (message.type === 'progress') {
-      setPeerProgress(prev => ({
-        ...prev,
-        [message.peerId]: message.value
-      }));
+  const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
+  const [peerStatus, setPeerStatus] = useState<Record<string, boolean>>({});
+  
+  const { broadcast, peers } = useWebRTC(userId, (message: any) => {
+    switch (message.type) {
+      case 'progress':
+        setPeerProgress(prev => ({
+          ...prev,
+          [message.peerId]: message.value
+        }));
+        break;
+      case 'hashrate':
+        setPeerHashrates(prev => ({
+          ...prev,
+          [message.peerId]: message.value
+        }));
+        break;
+      case 'status':
+        setPeerStatus(prev => ({
+          ...prev,
+          [message.peerId]: message.mining
+        }));
+        break;
+      case 'solution_found':
+        notificationOccurred('success');
+        impactOccurred('heavy');
+        toast({
+          title: "Solution Found!",
+          description: `Peer ${message.peerId.slice(0, 8)}... found a solution!`
+        });
+        break;
     }
   });
   const { impactOccurred, notificationOccurred } = useHapticFeedback();
@@ -82,9 +107,16 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                 <div className="absolute hidden group-hover:block top-full left-0 mt-2 p-2 bg-black/80 backdrop-blur-sm rounded-lg shadow-lg z-10 min-w-[200px]">
                   <div className="text-xs space-y-1">
                     {peers.map((peerId) => (
-                      <div key={peerId} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        <span className="font-mono">{peerId.slice(0, 8)}...</span>
+                      <div key={peerId} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${peerStatus[peerId] ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                          <span className="font-mono">{peerId.slice(0, 8)}...</span>
+                          {peerHashrates[peerId] && (
+                            <span className="text-xs text-muted-foreground">
+                              {Math.round(peerHashrates[peerId])} H/s
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ))}
                     {peers.length === 0 && (

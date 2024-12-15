@@ -66,8 +66,29 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
     channel.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === 'progress' && typeof data.value === 'number' && onMessage) {
-          onMessage(data);
+        if (onMessage) {
+          switch (data.type) {
+            case 'progress':
+              if (typeof data.value === 'number') {
+                onMessage(data);
+              }
+              break;
+            case 'hashrate':
+              if (typeof data.value === 'number') {
+                onMessage(data);
+              }
+              break;
+            case 'solution_found':
+              if (data.blockId && data.nonce) {
+                onMessage(data);
+              }
+              break;
+            case 'status':
+              if (data.mining !== undefined) {
+                onMessage(data);
+              }
+              break;
+          }
         }
       } catch (error) {
         console.error('Failed to parse P2P message:', error);
