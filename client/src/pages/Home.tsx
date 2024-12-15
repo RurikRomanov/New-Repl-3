@@ -1,9 +1,8 @@
 import { useTelegram } from "../hooks/useTelegram";
 import { MiningDashboard } from "../components/MiningDashboard";
-import { LeaderboardTable } from "../components/LeaderboardTable";
-import { UserStats } from "../components/UserStats";
-import { BlockHistory } from "../components/BlockHistory";
-import { ParticleBackground } from "../components/ParticleBackground";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { ChartBar, Trophy } from "lucide-react";
 
 export function Home() {
   const { user } = useTelegram();
@@ -17,14 +16,23 @@ export function Home() {
   }
 
   return (
-    <>
-      <ParticleBackground />
-      <div className="relative container mx-auto p-4 space-y-6 min-h-screen">
-        <MiningDashboard userId={user.id.toString()} />
-        <UserStats userId={user.id.toString()} />
-        <LeaderboardTable />
-        <BlockHistory />
+    <div className="container mx-auto p-4 space-y-6">
+      <MiningDashboard userId={user.id.toString()} />
+      
+      <div className="grid grid-cols-2 gap-4">
+        <Link href="/stats">
+          <Button variant="outline" className="w-full">
+            <ChartBar className="mr-2 h-4 w-4" />
+            Statistics
+          </Button>
+        </Link>
+        <Link href="/leaderboard">
+          <Button variant="outline" className="w-full">
+            <Trophy className="mr-2 h-4 w-4" />
+            Leaderboard
+          </Button>
+        </Link>
       </div>
-    </>
+    </div>
   );
 }
