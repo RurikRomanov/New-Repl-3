@@ -5,8 +5,51 @@ import { users, blocks, rewards } from "@db/schema";
 import { eq, desc } from "drizzle-orm";
 import crypto from "crypto";
 
+import { WebSocketServer } from 'ws';
+
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    verifyClient: (info) => {
+      // Игнорируем Vite HMR WebSocket подключения
+      return !info.req.headers['sec-websocket-protocol']?.includes('vite-hmr');
+    }
+  });
+  
+  const onlineMiners = new Set<string>();
+  
+  wss.on('connection', (ws) => {
+    let minerId: string | null = null;
+
+    ws.on('message', (message: string) => {
+      const data = JSON.parse(message);
+      if (data.type === 'register') {
+        minerId = data.minerId;
+        onlineMiners.add(minerId);
+        // Broadcast online miners count
+        wss.clients.forEach(client => {
+          client.send(JSON.stringify({
+            type: 'onlineMiners',
+            count: onlineMiners.size
+          }));
+        });
+      }
+    });
+
+    ws.on('close', () => {
+      if (minerId) {
+        onlineMiners.delete(minerId);
+        // Broadcast updated count
+        wss.clients.forEach(client => {
+          client.send(JSON.stringify({
+            type: 'onlineMiners',
+            count: onlineMiners.size
+          }));
+        });
+      }
+    });
+  });
 
   // Auth verification
   app.post("/api/auth/verify", async (req, res) => {

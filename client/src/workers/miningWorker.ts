@@ -6,10 +6,11 @@ const calculateHash = async (blockHash: string, nonce: string): Promise<string> 
 };
 
 self.onmessage = async (e: MessageEvent) => {
-  const { blockHash, difficulty } = e.data;
+  const { blockHash, difficulty, onlineMiners = 1 } = e.data;
   const target = "0".repeat(difficulty);
   
   let nonce = 0;
+  const iterationsPerCheck = Math.max(100, Math.floor(1000 / onlineMiners));
   
   while (true) {
     const nonceStr = nonce.toString(16).padStart(8, '0');
@@ -22,8 +23,8 @@ self.onmessage = async (e: MessageEvent) => {
     
     nonce++;
     
-    // Every 1000 iterations, check if we should stop
-    if (nonce % 1000 === 0) {
+    // Adjust delay based on online miners
+    if (nonce % iterationsPerCheck === 0) {
       await new Promise(resolve => setTimeout(resolve, 0));
     }
   }

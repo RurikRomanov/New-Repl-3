@@ -4,6 +4,7 @@ import { useToast } from './use-toast';
 
 export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
+  const [onlineMiners, setOnlineMiners] = useState(1);
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
   const { toast } = useToast();
@@ -66,10 +67,28 @@ export function useMining(userId: string) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const ws = new WebSocket(`ws://${window.location.host}`);
+    
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'register', minerId: userId }));
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'onlineMiners') {
+        setOnlineMiners(data.count);
+      }
+    };
+    
+    return () => ws.close();
+  }, [userId]);
+
   return {
     mining,
     currentBlock,
     startMining,
-    stopMining
+    stopMining,
+    onlineMiners
   };
 }
