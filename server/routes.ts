@@ -146,5 +146,26 @@ export function registerRoutes(app: Express): Server {
     });
   });
 
+  // Update user energy
+  app.post("/api/users/:id/energy", async (req, res) => {
+    const { id } = req.params;
+    const { energy } = req.body;
+
+    if (typeof energy !== 'number' || energy < 0 || energy > 100) {
+      return res.status(400).json({ error: "Invalid energy value" });
+    }
+
+    try {
+      await db.update(users)
+        .set({ energy })
+        .where(eq(users.telegramId, id));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Failed to update energy:', error);
+      res.status(500).json({ error: "Failed to update energy" });
+    }
+  });
+
   return httpServer;
 }
