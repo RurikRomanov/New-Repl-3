@@ -58,6 +58,12 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
       const startMining = () => {
         const activePeers = Object.entries(peerStatus).filter(([_, status]) => status).length;
         const speedMultiplier = Math.max(1, activePeers + 1);
+        
+        // Dispatch event about active miners count change
+        window.dispatchEvent(new CustomEvent('miners-count-changed', { 
+          detail: { count: activePeers + 1 } // +1 for current miner
+        }));
+
         intervalId = setInterval(() => {
           setProgress(p => {
             const increment = speedMultiplier * (Math.random() * 2 + 1);

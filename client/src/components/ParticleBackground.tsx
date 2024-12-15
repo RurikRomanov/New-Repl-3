@@ -30,13 +30,14 @@ export function ParticleBackground() {
     updateDimensions();
 
     // Initialize particles
-    particles.current = Array.from({ length: 50 }, () => ({
+    const activeMiners = 1; // Start with 1 particle for the current miner
+    particles.current = Array.from({ length: activeMiners }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       size: Math.random() * 2 + 1,
       speedX: (Math.random() - 0.5) * 0.5,
       speedY: (Math.random() - 0.5) * 0.5,
-      opacity: Math.random() * 0.5 + 0.2
+      opacity: Math.random() * 0.15 + 0.05 // Reduced opacity
     }));
 
     return () => {
@@ -95,24 +96,28 @@ export function ParticleBackground() {
         ctx.fill();
       });
 
-      // Add occasional "energy burst" particles
-      if (Math.random() < 0.02 * particleIntensity) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 2 + 1;
-        particles.current.push({
-          x: Math.random() * dimensions.width,
-          y: Math.random() * dimensions.height,
-          size: Math.random() * 3 + 2,
-          speedX: Math.cos(angle) * speed,
-          speedY: Math.sin(angle) * speed,
-          opacity: Math.random() * 0.5 + 0.3
-        });
-
-        // Keep particle count in check
-        if (particles.current.length > 60) {
-          particles.current.shift();
+      // Update particles based on active miners count
+    window.addEventListener('miners-count-changed', ((e: CustomEvent) => {
+      const activeMiners = e.detail.count;
+      const currentCount = particles.current.length;
+      
+      if (activeMiners > currentCount) {
+        // Add new particles
+        for (let i = 0; i < activeMiners - currentCount; i++) {
+          particles.current.push({
+            x: Math.random() * dimensions.width,
+            y: Math.random() * dimensions.height,
+            size: Math.random() * 2 + 1,
+            speedX: (Math.random() - 0.5) * 0.5,
+            speedY: (Math.random() - 0.5) * 0.5,
+            opacity: Math.random() * 0.15 + 0.05
+          });
         }
+      } else if (activeMiners < currentCount) {
+        // Remove excess particles
+        particles.current = particles.current.slice(0, activeMiners);
       }
+    }) as EventListener);
 
       animationFrameId.current = requestAnimationFrame(animate);
     };
