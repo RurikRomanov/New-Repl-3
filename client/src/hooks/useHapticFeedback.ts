@@ -1,37 +1,30 @@
 import { useCallback } from 'react';
 
+/**
+ * Hook для работы с тактильной обратной связью в Telegram Web App
+ */
 export function useHapticFeedback() {
   const impactOccurred = useCallback((style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
-    try {
-      window.Telegram?.WebApp.HapticFeedback.impactOccurred(style);
-    } catch (error) {
-      console.warn('Haptic feedback not supported');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred(style);
     }
   }, []);
 
   const notificationOccurred = useCallback((type: 'error' | 'success' | 'warning') => {
-    try {
-      window.Telegram?.WebApp.HapticFeedback.notificationOccurred(type);
-    } catch (error) {
-      console.warn('Haptic feedback not supported');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred(type);
     }
   }, []);
 
   const selectionChanged = useCallback(() => {
-    try {
-      window.Telegram?.WebApp.HapticFeedback.selectionChanged();
-    } catch (error) {
-      console.warn('Haptic feedback not supported');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.selectionChanged();
     }
   }, []);
 
   const tabSelected = useCallback(() => {
-    try {
-      impactOccurred('light');
-      selectionChanged();
-    } catch (error) {
-      console.warn('Haptic feedback not supported');
-    }
+    impactOccurred('light');
+    selectionChanged();
   }, [impactOccurred, selectionChanged]);
 
   return {
