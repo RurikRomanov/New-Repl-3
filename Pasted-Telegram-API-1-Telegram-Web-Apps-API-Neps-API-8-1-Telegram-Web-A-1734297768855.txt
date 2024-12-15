@@ -1,0 +1,68 @@
+Telegram API и документация
+	1.	Telegram Web Apps API (Neps API 8.1):
+	•	Документация Telegram Web Apps
+Описание API для взаимодействия с Telegram Mini App, включая window.Telegram.WebApp.
+	2.	Telegram Bot API:
+	•	Telegram Bot API Documentation
+Используется для отправки уведомлений, обработки команд и интеграции с ботом.
+
+Серверная часть (Backend)
+	1.	Express.js:
+	•	Express.js Официальный сайт
+Легковесный фреймворк для создания REST API.
+	2.	PostgreSQL (Node.js Driver):
+	•	node-postgres (pg)
+Для взаимодействия с PostgreSQL.
+	3.	dotenv:
+	•	dotenv на npm
+Для управления переменными окружения.
+	4.	crypto (встроенный в Node.js):
+	•	Node.js Crypto Documentation
+Для хеширования данных (например, генерация SHA256).
+	5.	Socket.IO (опционально для сигналинга):
+	•	Socket.IO Documentation
+Используется для реального времени (например, обновления о нахождении блока).
+	6.	axios:
+	•	Axios Documentation
+Для запросов к Telegram Bot API.
+
+Клиентская часть (Frontend)
+	1.	React:
+	•	React Documentation
+Для создания интерфейса.
+	2.	TypeScript:
+	•	TypeScript Documentation
+Типизация для React и других модулей.
+	3.	react-telegram-web-app:
+	•	react-telegram-web-app на GitHub
+Утилиты для удобной работы с Telegram Web Apps API в React.
+	4.	crypto-js:
+	•	crypto-js на npm
+Для хеширования данных на клиентской стороне.
+	5.	simple-peer (для P2P через WebRTC):
+	•	simple-peer на GitHub
+Библиотека для работы с WebRTC.
+	6.	axios:
+	•	Axios Documentation
+Для взаимодействия с бэкендом.
+	7.	Pako (сжатие данных, если потребуется):
+	•	Pako на npm
+Для сжатия данных, отправляемых через сеть.
+
+Инструменты для разработки
+	1.	Vite (для фронтенда, вместо CRA):
+	•	Vite Documentation
+Быстрый инструмент для сборки React-приложений.
+	2.	Web Workers:
+	•	MDN Web Workers Documentation
+Описание API для создания фоновых потоков.
+
+Документация по протоколам
+	1.	WebRTC:
+	•	WebRTC API Documentation на MDN
+Для P2P соединений между клиентами.
+	2.	SHA256 (алгоритм хеширования):
+	•	SHA256 на Wikipedia
+Теория алгоритма, используемого для майнинга.
+
+Эти ссылки помогут при интеграции, настройке проекта и изучении API. Каждая библиотека/технология здесь выбрана для соответствия поставленным задачам и требованиям проекта.
