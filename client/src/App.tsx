@@ -5,6 +5,8 @@ import { Leaderboard } from "./pages/Leaderboard";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
+import { EnergyProvider } from "./contexts/EnergyContext";
+import { ParticleBackground } from "./components/ParticleBackground";
 
 declare global {
   interface Window {
@@ -39,12 +41,17 @@ function App() {
   }, [location, setLocation]);
 
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/stats" component={Stats} />
-      <Route path="/leaderboard" component={Leaderboard} />
-      <Route component={NotFound} />
-    </Switch>
+    <EnergyProvider>
+      <ParticleBackground />
+      <div className="min-h-screen w-full">
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/stats" component={Stats} />
+          <Route path="/leaderboard" component={Leaderboard} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    </EnergyProvider>
   );
 }
 
