@@ -11,18 +11,25 @@ export function registerRoutes(app: Express): Server {
   // Auth verification
   app.post("/api/auth/verify", async (req, res) => {
     const { initData } = req.body;
-    // Verify Telegram init data here
-    const user = {
-      id: req.body.id,
-      username: req.body.username
-    };
-    
-    await db.insert(users).values({
-      telegramId: user.id.toString(),
-      username: user.username,
-    }).onConflictDoNothing();
+    try {
+      // Parse initData from Telegram
+      const data = JSON.parse(initData);
+      const user = data.user;
+      
+      if (!user || !user.id) {
+        return res.status(400).json({ error: "Invalid user data" });
+      }
 
-    res.json({ success: true });
+      await db.insert(users).values({
+        telegramId: user.id.toString(),
+        username: user.username || `user${user.id}`,
+      }).onConflictDoNothing();
+
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error('Auth error:', error);
+      res.status(400).json({ error: "Invalid init data" });
+    }
   });
 
   // Get current mining block
