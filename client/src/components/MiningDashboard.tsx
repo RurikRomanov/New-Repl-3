@@ -5,6 +5,7 @@ import { Users } from "lucide-react";
 import { useMining } from "../hooks/useMining";
 import { useState, useEffect } from "react";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
+import { useWebRTC } from "../hooks/useWebRTC";
 
 interface MiningDashboardProps {
   userId: string;
@@ -19,18 +20,24 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
   
   useEffect(() => {
     if (mining) {
-      const speedMultiplier = Math.max(1, onlineMiners / 2); // Ускорение от количества майнеров
+      const speedMultiplier = Math.max(1, onlineMiners / 2);
       const interval = setInterval(() => {
         setProgress(p => {
-          const increment = speedMultiplier * (Math.random() * 2 + 1); // Случайное увеличение для анимации
-          return p + increment > 100 ? 0 : p + increment;
+          const increment = speedMultiplier * (Math.random() * 2 + 1);
+          const newProgress = p + increment > 100 ? 0 : p + increment;
+          
+          // Отправляем обновление прогресса другим майнерам
+          broadcast({ type: 'progress', value: newProgress });
+          
+          return newProgress;
         });
       }, 50);
       return () => clearInterval(interval);
     } else {
       setProgress(0);
+      setPeerProgress({});
     }
-  }, [mining, onlineMiners]);
+  }, [mining, onlineMiners, broadcast]);
 
   return (
     <Card className="w-full max-w-md mx-auto bg-background/80 backdrop-blur border-muted">
