@@ -6,7 +6,7 @@ interface PeerConnection {
   dataChannel: RTCDataChannel;
 }
 
-export function useWebRTC(minerId: string) {
+export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
   const [peers, setPeers] = useState<Map<string, PeerConnection>>(new Map());
   const { toast } = useToast();
   
@@ -66,8 +66,8 @@ export function useWebRTC(minerId: string) {
     channel.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === 'progress' && typeof data.value === 'number') {
-          onMessage?.(data);
+        if (data.type === 'progress' && typeof data.value === 'number' && onMessage) {
+          onMessage(data);
         }
       } catch (error) {
         console.error('Failed to parse P2P message:', error);

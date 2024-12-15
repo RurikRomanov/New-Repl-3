@@ -13,7 +13,7 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
-  const { broadcast, peers } = useWebRTC(userId, (message) => {
+  const { broadcast, peers } = useWebRTC(userId, (message: { type: string; value: number; peerId: string }) => {
     if (message.type === 'progress') {
       setPeerProgress(prev => ({
         ...prev,
