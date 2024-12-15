@@ -3,6 +3,7 @@ import { MiningDashboard } from "../components/MiningDashboard";
 import { LeaderboardTable } from "../components/LeaderboardTable";
 import { UserStats } from "../components/UserStats";
 import { BlockHistory } from "../components/BlockHistory";
+import { ParticleBackground } from "../components/ParticleBackground";
 
 export function Home() {
   const { user } = useTelegram();
@@ -16,11 +17,14 @@ export function Home() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
-      <MiningDashboard userId={user.id.toString()} />
-      <UserStats userId={user.id.toString()} />
-      <LeaderboardTable />
-      <BlockHistory />
-    </div>
+    <>
+      <ParticleBackground />
+      <div className="relative container mx-auto p-4 space-y-6 min-h-screen">
+        <MiningDashboard userId={user.id.toString()} />
+        <UserStats userId={user.id.toString()} />
+        <LeaderboardTable />
+        <BlockHistory />
+      </div>
+    </>
   );
 }
