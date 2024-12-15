@@ -1,6 +1,7 @@
 import { useTelegram } from "../hooks/useTelegram";
 import { MiningDashboard } from "../components/MiningDashboard";
 import { Link } from "wouter";
+import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { Button } from "@/components/ui/button";
 import { ChartBar, Trophy } from "lucide-react";
 
@@ -21,13 +22,29 @@ export function Home() {
       
       <div className="grid grid-cols-2 gap-4">
         <Link href="/stats">
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => {
+              const { impactOccurred, selectionChanged } = useHapticFeedback();
+              impactOccurred('light');
+              selectionChanged();
+            }}
+          >
             <ChartBar className="mr-2 h-4 w-4" />
             Statistics
           </Button>
         </Link>
         <Link href="/leaderboard">
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => {
+              const { impactOccurred, selectionChanged } = useHapticFeedback();
+              impactOccurred('light');
+              selectionChanged();
+            }}
+          >
             <Trophy className="mr-2 h-4 w-4" />
             Leaderboard
           </Button>

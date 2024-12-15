@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useQuery } from "@tanstack/react-query";
 import {
   Table,
@@ -68,7 +69,11 @@ export function BlockHistory() {
                 <TableRow 
                   key={block.id}
                   className="cursor-pointer hover:bg-white/5"
-                  onClick={() => setSelectedBlock(block)}
+                  onClick={() => {
+                    const { impactOccurred } = useHapticFeedback();
+                    impactOccurred('light');
+                    setSelectedBlock(block);
+                  }}
                 >
                   <TableCell>
                     <Badge variant="outline">#{block.id}</Badge>
@@ -101,7 +106,19 @@ export function BlockHistory() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedBlock} onOpenChange={() => setSelectedBlock(null)}>
+      <Dialog 
+        open={!!selectedBlock} 
+        onOpenChange={(open) => {
+          const { impactOccurred, notificationOccurred } = useHapticFeedback();
+          if (open) {
+            impactOccurred('medium');
+            notificationOccurred('success');
+          } else {
+            impactOccurred('light');
+          }
+          setSelectedBlock(null);
+        }}
+      >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
