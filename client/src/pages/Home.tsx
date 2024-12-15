@@ -7,6 +7,12 @@ import { ChartBar, Trophy } from "lucide-react";
 
 export function Home() {
   const { user } = useTelegram();
+  const { impactOccurred, selectionChanged } = useHapticFeedback();
+
+  const handleNavClick = () => {
+    impactOccurred('light');
+    selectionChanged();
+  };
 
   if (!user) {
     return (
@@ -25,11 +31,7 @@ export function Home() {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => {
-              const { impactOccurred, selectionChanged } = useHapticFeedback();
-              impactOccurred('light');
-              selectionChanged();
-            }}
+            onClick={handleNavClick}
           >
             <ChartBar className="mr-2 h-4 w-4" />
             Statistics
@@ -39,11 +41,7 @@ export function Home() {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={() => {
-              const { impactOccurred, selectionChanged } = useHapticFeedback();
-              impactOccurred('light');
-              selectionChanged();
-            }}
+            onClick={handleNavClick}
           >
             <Trophy className="mr-2 h-4 w-4" />
             Leaderboard

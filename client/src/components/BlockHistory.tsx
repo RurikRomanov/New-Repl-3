@@ -37,6 +37,7 @@ interface Block {
 
 export function BlockHistory() {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const { impactOccurred, notificationOccurred } = useHapticFeedback();
 
   const { data: blocks } = useQuery({
     queryKey: ["/api/blocks/history"],
@@ -46,6 +47,21 @@ export function BlockHistory() {
     queryKey: [`/api/blocks/${selectedBlock?.id}/rewards`],
     enabled: !!selectedBlock,
   });
+
+  const handleBlockClick = (block: Block) => {
+    impactOccurred('light');
+    setSelectedBlock(block);
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    if (open) {
+      impactOccurred('medium');
+      notificationOccurred('success');
+    } else {
+      impactOccurred('light');
+    }
+    setSelectedBlock(null);
+  };
 
   return (
     <>
@@ -69,11 +85,7 @@ export function BlockHistory() {
                 <TableRow 
                   key={block.id}
                   className="cursor-pointer hover:bg-white/5"
-                  onClick={() => {
-                    const { impactOccurred } = useHapticFeedback();
-                    impactOccurred('light');
-                    setSelectedBlock(block);
-                  }}
+                  onClick={() => handleBlockClick(block)}
                 >
                   <TableCell>
                     <Badge variant="outline">#{block.id}</Badge>
@@ -108,16 +120,7 @@ export function BlockHistory() {
 
       <Dialog 
         open={!!selectedBlock} 
-        onOpenChange={(open) => {
-          const { impactOccurred, notificationOccurred } = useHapticFeedback();
-          if (open) {
-            impactOccurred('medium');
-            notificationOccurred('success');
-          } else {
-            impactOccurred('light');
-          }
-          setSelectedBlock(null);
-        }}
+        onOpenChange={handleDialogChange}
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
