@@ -44,9 +44,18 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Mining Dashboard</CardTitle>
-          <div className="flex items-center gap-2 text-sm">
-            <Users className="h-4 w-4" />
-            <span>{onlineMiners} online</span>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>{onlineMiners} online</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
+              </div>
+              <span>{peers.length} P2P peers</span>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -67,28 +76,59 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
           </div>
 
           {mining && (
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Mining Progress</span>
-                <span className="text-sm text-muted-foreground">
-                  Boost: x{onlineMiners}
-                </span>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Your Progress</span>
+                  <span className="text-sm text-muted-foreground">
+                    Boost: x{onlineMiners}
+                  </span>
+                </div>
+                <Progress 
+                  value={progress} 
+                  className="h-2 relative overflow-hidden"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                  }}
+                >
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 animate-pulse"
+                    style={{
+                      width: `${progress}%`,
+                      transition: 'width 0.1s ease-out'
+                    }}
+                  />
+                </Progress>
               </div>
-              <Progress 
-            value={progress} 
-            className="h-2 relative overflow-hidden"
-            style={{
-              background: 'rgba(255,255,255,0.1)',
-            }}
-          >
-            <div 
-              className="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 animate-pulse"
-              style={{
-                width: `${progress}%`,
-                transition: 'width 0.1s ease-out'
-              }}
-            />
-          </Progress>
+              
+              {Object.entries(peerProgress).length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Peer Progress</span>
+                  {Object.entries(peerProgress).map(([peerId, value]) => (
+                    <div key={peerId} className="space-y-1">
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>Peer {peerId.slice(0, 8)}...</span>
+                        <span>{Math.round(value)}%</span>
+                      </div>
+                      <Progress 
+                        value={value} 
+                        className="h-1.5 relative overflow-hidden"
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        <div 
+                          className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600"
+                          style={{
+                            width: `${value}%`,
+                            transition: 'width 0.1s ease-out'
+                          }}
+                        />
+                      </Progress>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
