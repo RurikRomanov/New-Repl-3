@@ -13,7 +13,14 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners } = useMining(userId);
-  const { broadcast, peers } = useWebRTC(userId);
+  const { broadcast, peers } = useWebRTC(userId, (message) => {
+    if (message.type === 'progress') {
+      setPeerProgress(prev => ({
+        ...prev,
+        [message.peerId]: message.value
+      }));
+    }
+  });
   const { impactOccurred, notificationOccurred } = useHapticFeedback();
   const [progress, setProgress] = useState(0);
   const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
@@ -27,7 +34,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
           const newProgress = p + increment > 100 ? 0 : p + increment;
           
           // Отправляем обновление прогресса другим майнерам
-          broadcast({ type: 'progress', value: newProgress });
+          broadcast({ type: 'progress', value: newProgress, peerId: userId });
           
           return newProgress;
         });
