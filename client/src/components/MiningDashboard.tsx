@@ -33,7 +33,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
 
           <div className="space-y-2">
             <span className="text-sm font-medium">Energy</span>
-            <Progress value={75} />
+            <Progress value={energy} max={100} />
+            <span className="text-xs text-muted-foreground">{energy}/100</span>
           </div>
 
           <Button

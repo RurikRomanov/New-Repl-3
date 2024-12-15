@@ -6,10 +6,11 @@ export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
+  const [energy, setEnergy] = useState(100);
   const { toast } = useToast();
 
   const startMining = useCallback(() => {
-    if (!currentBlock || mining) return;
+    if (!currentBlock || mining || energy <= 0) return;
 
     const miningWorker = new Worker(
       new URL('../workers/miningWorker.ts', import.meta.url),
@@ -17,28 +18,42 @@ export function useMining(userId: string) {
     );
 
     miningWorker.onmessage = async (e) => {
-      const { nonce } = e.data;
-      try {
-        await submitSolution(currentBlock.id, nonce, userId);
+      const { type, nonce, remaining } = e.data;
+      
+      if (type === 'solution') {
+        try {
+          await submitSolution(currentBlock.id, nonce, userId);
+          toast({
+            title: "Block Mined!",
+            description: "You successfully mined a block"
+          });
+        } catch (error) {
+          console.error('Mining error:', error);
+        }
+        setMining(false);
+        miningWorker.terminate();
+      } else if (type === 'energy') {
+        setEnergy(remaining);
+      } else if (type === 'no_energy') {
         toast({
-          title: "Block Mined!",
-          description: "You successfully mined a block"
+          title: "Out of Energy",
+          description: "You need to wait for energy to regenerate",
+          variant: "destructive"
         });
-      } catch (error) {
-        console.error('Mining error:', error);
+        setMining(false);
+        miningWorker.terminate();
       }
-      setMining(false);
-      miningWorker.terminate();
     };
 
     miningWorker.postMessage({
       blockHash: currentBlock.hash,
-      difficulty: currentBlock.difficulty
+      difficulty: currentBlock.difficulty,
+      energy
     });
 
     setWorker(miningWorker);
     setMining(true);
-  }, [currentBlock, mining, userId]);
+  }, [currentBlock, mining, userId, energy]);
 
   const stopMining = useCallback(() => {
     if (worker) {
