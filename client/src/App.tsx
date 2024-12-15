@@ -2,16 +2,13 @@ import { Switch, Route } from "wouter";
 import { Home } from "./pages/Home";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
-import { EnergyProvider } from "./contexts/EnergyContext";
 
 function App() {
   return (
-    <EnergyProvider>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route component={NotFound} />
-      </Switch>
-    </EnergyProvider>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 

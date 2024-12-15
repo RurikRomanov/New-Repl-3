@@ -27,12 +27,7 @@ export function UserStats({ userId }: UserStatsProps) {
             </span>
           </div>
 
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Energy</span>
-            <span className="text-sm text-muted-foreground">
-              {stats.user.energy}/100
-            </span>
-          </div>
+          
 
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">Blocks Mined</span>
