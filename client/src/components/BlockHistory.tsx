@@ -15,6 +15,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Clock, User, Users, Award } from "lucide-react";
+
+interface BlockReward {
+  userId: string;
+  amount: number;
+  type: 'miner' | 'participant';
+}
 
 interface Block {
   id: number;
@@ -23,6 +31,7 @@ interface Block {
   minedBy: string;
   createdAt: string;
   completedAt: string;
+  rewards?: BlockReward[];
 }
 
 export function BlockHistory() {
@@ -32,9 +41,14 @@ export function BlockHistory() {
     queryKey: ["/api/blocks/history"],
   });
 
+  const { data: blockRewards } = useQuery({
+    queryKey: [`/api/blocks/${selectedBlock?.id}/rewards`],
+    enabled: !!selectedBlock,
+  });
+
   return (
     <>
-      <Card className="w-full max-w-4xl mx-auto mt-6">
+      <Card className="w-full max-w-4xl mx-auto mt-6 bg-black/60 backdrop-blur-sm border-slate-800">
         <CardHeader>
           <CardTitle>Recent Blocks</CardTitle>
         </CardHeader>
@@ -46,20 +60,39 @@ export function BlockHistory() {
                 <TableHead>Hash (first 10 chars)</TableHead>
                 <TableHead>Mined By</TableHead>
                 <TableHead>Time</TableHead>
+                <TableHead>Participants</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {blocks?.map((block: Block) => (
                 <TableRow 
                   key={block.id}
-                  className="cursor-pointer hover:bg-muted"
+                  className="cursor-pointer hover:bg-white/5"
                   onClick={() => setSelectedBlock(block)}
                 >
-                  <TableCell>{block.id}</TableCell>
-                  <TableCell>{block.hash.slice(0, 10)}...</TableCell>
-                  <TableCell>{block.minedBy}</TableCell>
                   <TableCell>
-                    {new Date(block.completedAt).toLocaleTimeString()}
+                    <Badge variant="outline">#{block.id}</Badge>
+                  </TableCell>
+                  <TableCell className="font-mono">
+                    {block.hash.slice(0, 10)}...
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      {block.minedBy}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      {new Date(block.completedAt).toLocaleTimeString()}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      {blockRewards?.filter(r => r.type === 'participant').length || 0}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -69,40 +102,64 @@ export function BlockHistory() {
       </Card>
 
       <Dialog open={!!selectedBlock} onOpenChange={() => setSelectedBlock(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Block Details #{selectedBlock?.id}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              Block #{selectedBlock?.id} Details
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <p className="text-sm font-medium mb-1">Hash</p>
-              <p className="text-sm text-muted-foreground break-all">
+              <p className="text-sm font-medium mb-2">Hash</p>
+              <p className="text-sm text-muted-foreground font-mono bg-muted p-3 rounded-md break-all">
                 {selectedBlock?.hash}
               </p>
             </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Nonce</p>
-              <p className="text-sm text-muted-foreground">
-                {selectedBlock?.nonce}
-              </p>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium mb-2">Miner</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4" />
+                  <span>{selectedBlock?.minedBy}</span>
+                  <Badge variant="secondary">
+                    {blockRewards?.find(r => r.type === 'miner')?.amount || 0} rewards
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-2">Participants</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4" />
+                  <span>{blockRewards?.filter(r => r.type === 'participant').length || 0}</span>
+                  <Badge variant="secondary">
+                    {blockRewards?.filter(r => r.type === 'participant')
+                      .reduce((sum, r) => sum + r.amount, 0) || 0} shared
+                  </Badge>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Mined By</p>
-              <p className="text-sm text-muted-foreground">
-                {selectedBlock?.minedBy}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Created At</p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(selectedBlock?.createdAt || '').toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Completed At</p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(selectedBlock?.completedAt || '').toLocaleString()}
-              </p>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Timestamps</p>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Created:</span>
+                  <span className="text-muted-foreground">
+                    {new Date(selectedBlock?.createdAt || '').toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Completed:</span>
+                  <span className="text-muted-foreground">
+                    {new Date(selectedBlock?.completedAt || '').toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </DialogContent>

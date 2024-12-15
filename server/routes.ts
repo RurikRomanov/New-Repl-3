@@ -175,6 +175,19 @@ export function registerRoutes(app: Express): Server {
 
   // Get user stats
   // Get block history
+  // Get block rewards
+  app.get("/api/blocks/:id/rewards", async (req, res) => {
+    try {
+      const blockRewards = await db.query.rewards.findMany({
+        where: eq(rewards.blockId, parseInt(req.params.id))
+      });
+      res.json(blockRewards);
+    } catch (error) {
+      console.error('Failed to fetch block rewards:', error);
+      res.status(500).json({ error: "Failed to fetch block rewards" });
+    }
+  });
+
   app.get("/api/blocks/history", async (req, res) => {
     try {
       const history = await db.query.blocks.findMany({
