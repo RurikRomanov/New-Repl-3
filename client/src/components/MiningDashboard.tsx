@@ -208,9 +208,15 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
               if (mining) {
                 notificationOccurred('warning');
                 stopMining();
+                window.dispatchEvent(new CustomEvent('mining-state-changed', { 
+                  detail: { mining: false } 
+                }));
               } else {
                 notificationOccurred('success');
                 startMining();
+                window.dispatchEvent(new CustomEvent('mining-state-changed', { 
+                  detail: { mining: true } 
+                }));
               }
             }}
             variant={mining ? "destructive" : "default"}

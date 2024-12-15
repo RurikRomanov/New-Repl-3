@@ -55,14 +55,20 @@ export function ParticleBackground() {
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
 
+    let particleIntensity = 1;
+    let targetIntensity = 1;
+
     const animate = () => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
       ctx.fillStyle = 'rgba(0, 0, 0, 1)';
       ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
+      // Smooth transition for particle intensity
+      particleIntensity += (targetIntensity - particleIntensity) * 0.1;
+
       particles.current.forEach((particle) => {
-        particle.x += particle.speedX;
-        particle.y += particle.speedY;
+        particle.x += particle.speedX * particleIntensity;
+        particle.y += particle.speedY * particleIntensity;
 
         // Wrap around edges
         if (particle.x < 0) particle.x = dimensions.width;
@@ -70,21 +76,61 @@ export function ParticleBackground() {
         if (particle.y < 0) particle.y = dimensions.height;
         if (particle.y > dimensions.height) particle.y = 0;
 
+        // Dynamic particle size and opacity based on intensity
+        const pulseSize = particle.size * (1 + Math.sin(Date.now() * 0.003) * 0.2);
+        const dynamicOpacity = particle.opacity * (0.5 + particleIntensity * 0.5);
+
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(64, 156, 255, ${particle.opacity * 0.15})`;
+        ctx.arc(particle.x, particle.y, pulseSize, 0, Math.PI * 2);
+        
+        // Gradient for particles
+        const gradient = ctx.createRadialGradient(
+          particle.x, particle.y, 0,
+          particle.x, particle.y, pulseSize
+        );
+        gradient.addColorStop(0, `rgba(64, 156, 255, ${dynamicOpacity})`);
+        gradient.addColorStop(1, 'rgba(64, 156, 255, 0)');
+        
+        ctx.fillStyle = gradient;
         ctx.fill();
       });
+
+      // Add occasional "energy burst" particles
+      if (Math.random() < 0.02 * particleIntensity) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 2 + 1;
+        particles.current.push({
+          x: Math.random() * dimensions.width,
+          y: Math.random() * dimensions.height,
+          size: Math.random() * 3 + 2,
+          speedX: Math.cos(angle) * speed,
+          speedY: Math.sin(angle) * speed,
+          opacity: Math.random() * 0.5 + 0.3
+        });
+
+        // Keep particle count in check
+        if (particles.current.length > 60) {
+          particles.current.shift();
+        }
+      }
 
       animationFrameId.current = requestAnimationFrame(animate);
     };
 
     animate();
 
+    // Event listener for mining state changes
+    const handleMiningState = (e: CustomEvent) => {
+      targetIntensity = e.detail.mining ? 2.5 : 1;
+    };
+
+    window.addEventListener('mining-state-changed', handleMiningState as EventListener);
+
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
+      window.removeEventListener('mining-state-changed', handleMiningState as EventListener);
     };
   }, [dimensions]);
 
