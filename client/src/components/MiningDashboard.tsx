@@ -56,7 +56,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
     if (mining) {
       // Начальное состояние майнинга
       const startMining = () => {
-        const speedMultiplier = Math.max(1, onlineMiners / 2);
+        const activePeers = Object.entries(peerStatus).filter(([_, status]) => status).length;
+        const speedMultiplier = Math.max(1, activePeers + 1);
         intervalId = setInterval(() => {
           setProgress(p => {
             const increment = speedMultiplier * (Math.random() * 2 + 1);
@@ -150,7 +151,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Your Progress</span>
                   <span className="text-sm text-muted-foreground">
-                    Boost: x{onlineMiners}
+                    Boost: x{Object.entries(peerStatus).filter(([_, status]) => status).length + 1}
                   </span>
                 </div>
                 <Progress 
