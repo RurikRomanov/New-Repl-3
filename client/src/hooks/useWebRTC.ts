@@ -103,6 +103,19 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
         variant: "destructive"
       });
     };
+    
+    channel.onclose = () => {
+      console.log('DataChannel closed, attempting to reconnect...');
+      // Попытка переподключения к потерянному пиру
+      const peerId = Array.from(peers.entries())
+        .find(([_, p]) => p.dataChannel === channel)?.[0];
+      
+      if (peerId) {
+        setTimeout(() => {
+          connectToPeer(peerId);
+        }, 5000);
+      }
+    };
   };
   
   const connectToPeer = useCallback(async (targetId: string) => {
@@ -190,6 +203,11 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
       
       ws.onclose = () => {
         console.log('Signal server disconnected, attempting to reconnect...');
+        // Очищаем текущие соединения
+        peers.forEach((peer) => {
+          peer.connection.close();
+        });
+        setPeers(new Map());
         // Попытка переподключения через 5 секунд
         reconnectTimer = setTimeout(connectWebSocket, 5000);
       };
