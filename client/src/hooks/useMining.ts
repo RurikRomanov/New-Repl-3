@@ -6,6 +6,9 @@ import { useWebRTC } from './useWebRTC';
 export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
   const [onlineMiners, setOnlineMiners] = useState(1);
+const [progress, setProgress] = useState(0);
+const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
+const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
   const [currentHashrate, setCurrentHashrate] = useState(0); // Added state for current hashrate
@@ -42,20 +45,40 @@ export function useMining(userId: string) {
     );
 
     miningWorker.onmessage = async (e) => {
-      const { type, nonce } = e.data;
+      const { type, nonce, progress, currentHashrate } = e.data;
       
-      if (type === 'solution') {
-        try {
-          await submitSolution(currentBlock.id, nonce, userId);
-          toast({
-            title: "Block Mined!",
-            description: "You successfully mined a block"
+      switch (type) {
+        case 'solution':
+          try {
+            await submitSolution(currentBlock.id, nonce, userId);
+            toast({
+              title: "Block Mined!",
+              description: "You successfully mined a block"
+            });
+            // Оповещаем других майнеров о найденном решении
+            broadcast({ 
+              type: 'solution_found',
+              blockId: currentBlock.id,
+              minerId: userId
+            });
+          } catch (error) {
+            console.error('Mining error:', error);
+          }
+          setMining(false);
+          miningWorker.terminate();
+          break;
+          
+        case 'progress':
+          setProgress(progress);
+          setCurrentHashrate(currentHashrate / 1000000); // Конвертируем в MH/s
+          // Отправляем обновление прогресса другим майнерам
+          broadcast({ 
+            type: 'progress',
+            progress,
+            peerId: userId,
+            hashrate: currentHashrate
           });
-        } catch (error) {
-          console.error('Mining error:', error);
-        }
-        setMining(false);
-        miningWorker.terminate();
+          break;
       }
     };
 
