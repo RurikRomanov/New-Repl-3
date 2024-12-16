@@ -12,13 +12,12 @@ const calculateMaxAttempts = (difficulty: number): number => {
 };
 
 self.onmessage = async (e: MessageEvent) => {
-  const { type, block, difficulty } = e.data;
+  const { blockHash, difficulty } = e.data;
   
-  if (!block || !block.hash) {
+  if (!blockHash) {
     self.postMessage({ type: 'error', message: 'Invalid block data' });
     return;
   }
-  const { blockHash } = block;
   const target = "0".repeat(difficulty);
   const maxAttempts = calculateMaxAttempts(difficulty);
   
