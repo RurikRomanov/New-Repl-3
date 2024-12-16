@@ -62,8 +62,10 @@ export function useMining(userId: string) {
   useEffect(() => {
     if (!worker) return;
 
-    const handleWorkerMessage = async (e: MessageEvent) => {
+    const handleWorkerMessage = (e: MessageEvent) => {
       const { type, nonce, progress: workerProgress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
+
+      if (!currentBlock) return; // Added check for currentBlock
 
       switch (type) {
         case 'solution':
