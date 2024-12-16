@@ -12,13 +12,7 @@ const calculateMaxAttempts = (difficulty: number): number => {
 };
 
 self.onmessage = async (e: MessageEvent) => {
-  const { type, block, difficulty } = e.data;
-  
-  if (!block?.hash) {
-    self.postMessage({ type: 'error', message: 'Invalid block data' });
-    return;
-  }
-  const blockHash = block.hash;
+  const { blockHash, difficulty, onlineMiners = 1 } = e.data;
   const target = "0".repeat(difficulty);
   const maxAttempts = calculateMaxAttempts(difficulty);
   
@@ -77,7 +71,7 @@ self.onmessage = async (e: MessageEvent) => {
       lastProgressUpdate = now;
       
       // Добавляем небольшую задержку для снижения нагрузки на CPU
-      await new Promise(resolve => setTimeout(resolve, Math.max(5, 20 / 1))); //Assuming onlineMiners defaults to 1 if not provided
+      await new Promise(resolve => setTimeout(resolve, Math.max(5, 20 / onlineMiners)));
     }
   }
 };

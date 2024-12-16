@@ -65,8 +65,6 @@ export function useMining(userId: string) {
     const handleWorkerMessage = async (e: MessageEvent) => {
       const { type, nonce, progress: workerProgress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
 
-      if (!currentBlock) return; // Added check for currentBlock
-
       switch (type) {
         case 'solution':
           try {
@@ -268,10 +266,9 @@ export function useMining(userId: string) {
   }, [userId]);
 
   useEffect(() => {
-    if (worker && currentBlock) {
+    if (worker) {
       worker.postMessage({
-        type: 'start',
-        block: currentBlock,
+        blockHash: currentBlock.hash,
         difficulty: currentBlock.difficulty
       });
     }
