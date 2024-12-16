@@ -6,16 +6,18 @@ import { useWebRTC } from './useWebRTC';
 export function useMining(userId: string) {
   const [mining, setMining] = useState(false);
   const [onlineMiners, setOnlineMiners] = useState(1);
-const [progress, setProgress] = useState(0);
-const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
-const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
+  const [progress, setProgress] = useState(0);
+  const [peerProgress, setPeerProgress] = useState<Record<string, number>>({});
+  const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
   const [currentBlock, setCurrentBlock] = useState<any>(null);
   const [worker, setWorker] = useState<Worker | null>(null);
   const [currentHashrate, setCurrentHashrate] = useState(0); // Added state for current hashrate
+  const [lastProgress, setLastProgress] = useState<number>(0);
+  const [totalNetworkProgress, setTotalNetworkProgress] = useState<number>(0);
   const { toast } = useToast();
   const { broadcast, peers } = useWebRTC(userId, (data) => {
     if (!data) return;
-    
+
     switch (data.type) {
       case 'progress':
         // Handle progress updates from peers
@@ -44,13 +46,25 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
       { type: 'module' }
     );
 
-    // Сохраняем последний прогресс для текущего пользователя
-    const [lastProgress, setLastProgress] = useState<number>(0);
-    const [totalNetworkProgress, setTotalNetworkProgress] = useState<number>(0);
+    setWorker(miningWorker);
+    setMining(true);
+  }, [currentBlock, mining]);
 
-    miningWorker.onmessage = async (e) => {
-      const { type, nonce, progress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
-      
+  const stopMining = useCallback(() => {
+    if (worker) {
+      worker.terminate();
+      setWorker(null);
+    }
+    setMining(false);
+    setCurrentHashrate(0); // Reset hashrate on stop
+  }, [worker]);
+
+  useEffect(() => {
+    if (!worker) return;
+
+    const handleWorkerMessage = async (e: MessageEvent) => {
+      const { type, nonce, progress: workerProgress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
+
       switch (type) {
         case 'solution':
           try {
@@ -60,9 +74,9 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
               title: "Block Mined! 🎉",
               description: `Successfully mined with ${(hashRate/1000000).toFixed(2)} MH/s`
             });
-            
+
             // Оповещаем других майнеров о найденном решении
-            broadcast({ 
+            broadcast({
               type: 'solution_found',
               blockId: currentBlock.id,
               minerId: userId,
@@ -73,7 +87,7 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
             });
 
             // Сохраняем прогресс перед остановкой
-            setLastProgress(progress);
+            setLastProgress(workerProgress);
           } catch (error) {
             console.error('Mining error:', error);
             toast({
@@ -83,50 +97,39 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
             });
           }
           setMining(false);
-          miningWorker.terminate();
+          worker.terminate();
           break;
-          
+
         case 'progress':
           // Обновляем прогресс текущего майнера
-          setProgress(progress);
-          setLastProgress(progress);
+          setProgress(workerProgress);
+          setLastProgress(workerProgress);
           setCurrentHashrate(currentHashrate / 1000000);
 
           // Рассчитываем общий прогресс сети
           const activeMiners = Object.keys(peerProgress).length + 1;
-          const totalProgress = (Object.values(peerProgress).reduce((sum, p) => sum + p, 0) + progress) / activeMiners;
+          const totalProgress = (Object.values(peerProgress).reduce((sum, p) => sum + p, 0) + workerProgress) / activeMiners;
           setTotalNetworkProgress(totalProgress);
-          
+
           // Отправляем обновление прогресса и хэшрейта другим майнерам
-          broadcast({ 
+          broadcast({
             type: 'progress',
-            progress,
+            progress: workerProgress,
             peerId: userId,
             hashrate: currentHashrate,
             estimatedTimeRemaining,
-            lastProgress: progress // Отправляем текущий прогресс как последний сохраненный
+            lastProgress: workerProgress // Отправляем текущий прогресс как последний сохраненный
           });
           break;
       }
     };
 
-    miningWorker.postMessage({
-      blockHash: currentBlock.hash,
-      difficulty: currentBlock.difficulty
-    });
+    worker.onmessage = handleWorkerMessage;
+    return () => {
+      worker.removeEventListener('message', handleWorkerMessage);
+    };
+  }, [worker, totalNetworkProgress]);
 
-    setWorker(miningWorker);
-    setMining(true);
-  }, [currentBlock, mining, userId]);
-
-  const stopMining = useCallback(() => {
-    if (worker) {
-      worker.terminate();
-      setWorker(null);
-    }
-    setMining(false);
-    setCurrentHashrate(0); // Reset hashrate on stop
-  }, [worker]);
 
   useEffect(() => {
     const fetchBlock = async () => {
@@ -149,7 +152,7 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
     const startTime = performance.now();
     const encoder = new TextEncoder();
 
-    const promises = Array.from({ length: iterations }, (_, i) => 
+    const promises = Array.from({ length: iterations }, (_, i) =>
       crypto.subtle.digest('SHA-256', encoder.encode(testData + i))
     );
 
@@ -184,12 +187,12 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
       try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const ws = new WebSocket(`${protocol}//${window.location.host}`);
-        
+
         ws.onopen = () => {
           console.log('WebSocket connected');
           ws.send(JSON.stringify({ type: 'register', minerId: userId }));
         };
-        
+
         ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
           if (data.type === 'onlineMiners') {
@@ -201,7 +204,7 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
           console.error('WebSocket error:', error);
           setTimeout(wsConnect, 5000); // Попытка переподключения через 5 секунд
         };
-        
+
         return ws;
       } catch (error) {
         console.error('WebSocket connection error:', error);
@@ -211,7 +214,7 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
     };
 
     const ws = wsConnect();
-    
+
     const handleSocketMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
@@ -248,19 +251,29 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
       console.log('WebSocket connected');
       ws.send(JSON.stringify({ type: 'register', minerId: userId }));
     };
-    
+
     ws.onmessage = handleSocketMessage;
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       setTimeout(wsConnect, 5000);
     };
-    
+
     return () => {
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.close();
       }
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (worker) {
+      worker.postMessage({
+        blockHash: currentBlock.hash,
+        difficulty: currentBlock.difficulty
+      });
+    }
+  }, [worker, currentBlock]);
+
 
   return {
     mining,
@@ -270,6 +283,9 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
     onlineMiners,
     peers,
     broadcast,
-    currentHashrate // Added currentHashrate to the returned object
+    currentHashrate, // Added currentHashrate to the returned object
+    progress,
+    lastProgress,
+    totalNetworkProgress
   };
 }
