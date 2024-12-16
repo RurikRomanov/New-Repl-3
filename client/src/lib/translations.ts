@@ -6,6 +6,142 @@ interface Translations {
 }
 
 export const translations: Translations = {
+  'navigation.statistics': {
+    en: 'Statistics',
+    ru: 'Статистика'
+  },
+  'navigation.leaderboard': {
+    en: 'Leaderboard',
+    ru: 'Рейтинг'
+  },
+  'blocks.title': {
+    en: 'Recent Blocks',
+    ru: 'Последние блоки'
+  },
+  'blocks.number': {
+    en: 'Block #',
+    ru: 'Блок №'
+  },
+  'blocks.hashShort': {
+    en: 'Hash (first 10 chars)',
+    ru: 'Хеш (первые 10 символов)'
+  },
+  'blocks.minedBy': {
+    en: 'Mined By',
+    ru: 'Добыто'
+  },
+  'blocks.time': {
+    en: 'Time',
+    ru: 'Время'
+  },
+  'blocks.participants': {
+    en: 'Participants',
+    ru: 'Участники'
+  },
+  'blocks.details': {
+    en: 'Block Details',
+    ru: 'Детали блока'
+  },
+  'blocks.fullHash': {
+    en: 'Hash',
+    ru: 'Хеш'
+  },
+  'blocks.miner': {
+    en: 'Miner',
+    ru: 'Майнер'
+  },
+  'blocks.rewards': {
+    en: 'rewards',
+    ru: 'наград'
+  },
+  'blocks.shared': {
+    en: 'shared',
+    ru: 'разделено'
+  },
+  'blocks.timestamps': {
+    en: 'Timestamps',
+    ru: 'Временные метки'
+  },
+  'blocks.created': {
+    en: 'Created',
+    ru: 'Создан'
+  },
+  'blocks.completed': {
+    en: 'Completed',
+    ru: 'Завершён'
+  },
+  'stats.title': {
+    en: 'Your Stats',
+    ru: 'Ваша статистика'
+  },
+  'stats.totalRewards': {
+    en: 'Total Rewards',
+    ru: 'Всего наград'
+  },
+  'stats.blocksMined': {
+    en: 'Blocks Mined',
+    ru: 'Добыто блоков'
+  },
+  'blocks.recent': {
+    en: 'Recent Blocks',
+    ru: 'Последние блоки'
+  },
+  'blocks.blockNumber': {
+    en: 'Block #',
+    ru: 'Блок №'
+  },
+  'blocks.hash': {
+    en: 'Hash',
+    ru: 'Хеш'
+  },
+  'blocks.minedBy': {
+    en: 'Mined By',
+    ru: 'Добыто'
+  },
+  'blocks.details': {
+    en: 'Block Details',
+    ru: 'Детали блока'
+  },
+  'blocks.rewards': {
+    en: 'rewards',
+    ru: 'наград'
+  },
+  'blocks.shared': {
+    en: 'shared',
+    ru: 'разделено'
+  },
+  'blocks.participants': {
+    en: 'Participants',
+    ru: 'Участников'
+  },
+  'blocks.timestamps': {
+    en: 'Timestamps',
+    ru: 'Временные метки'
+  },
+  'blocks.created': {
+    en: 'Created',
+    ru: 'Создан'
+  },
+  'blocks.completed': {
+    en: 'Completed',
+    ru: 'Завершён'
+  },
+  'leaderboard.title': {
+    en: 'Leaderboard',
+    ru: 'Таблица лидеров'
+  },
+  'leaderboard.rank': {
+    en: 'Rank',
+    ru: 'Место'
+  },
+  'leaderboard.username': {
+    en: 'Username',
+    ru: 'Имя пользователя'
+  },
+  'leaderboard.rewards': {
+    en: 'Rewards',
+    ru: 'Награды'
+  },
   'mining.dashboard': {
     en: 'Mining Dashboard',
     ru: 'Панель майнинга'

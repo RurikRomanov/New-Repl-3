@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useQuery } from "@tanstack/react-query";
+import { useThemeLanguage } from "../contexts/ThemeLanguageContext";
+import { useTranslation } from "../lib/translations";
 import {
   Table,
   TableBody,
@@ -38,6 +40,8 @@ interface Block {
 export function BlockHistory() {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const { impactOccurred, notificationOccurred } = useHapticFeedback();
+  const { language } = useThemeLanguage();
+  const t = useTranslation(language);
 
   const { data: blocks } = useQuery({
     queryKey: ["/api/blocks/history"],
@@ -67,17 +71,17 @@ export function BlockHistory() {
     <>
       <Card className="w-full max-w-4xl mx-auto mt-6 bg-black/60 backdrop-blur-sm border-slate-800">
         <CardHeader>
-          <CardTitle>Recent Blocks</CardTitle>
+          <CardTitle>{t('blocks.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Block #</TableHead>
-                <TableHead>Hash (first 10 chars)</TableHead>
-                <TableHead>Mined By</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Participants</TableHead>
+                <TableHead>{t('blocks.number')}</TableHead>
+                <TableHead>{t('blocks.hashShort')}</TableHead>
+                <TableHead>{t('blocks.minedBy')}</TableHead>
+                <TableHead>{t('blocks.time')}</TableHead>
+                <TableHead>{t('blocks.participants')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,12 +130,12 @@ export function BlockHistory() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Award className="h-5 w-5" />
-              Block #{selectedBlock?.id} Details
+              {t('blocks.details')} #{selectedBlock?.id}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             <div>
-              <p className="text-sm font-medium mb-2">Hash</p>
+              <p className="text-sm font-medium mb-2">{t('blocks.fullHash')}</p>
               <p className="text-sm text-muted-foreground font-mono bg-muted p-3 rounded-md break-all">
                 {selectedBlock?.hash}
               </p>
@@ -139,42 +143,42 @@ export function BlockHistory() {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium mb-2">Miner</p>
+                <p className="text-sm font-medium mb-2">{t('blocks.miner')}</p>
                 <div className="flex items-center gap-2 text-sm">
                   <User className="h-4 w-4" />
                   <span>{selectedBlock?.minedBy}</span>
                   <Badge variant="secondary">
-                    {blockRewards?.find(r => r.type === 'miner')?.amount || 0} rewards
+                    {blockRewards?.find(r => r.type === 'miner')?.amount || 0} {t('blocks.rewards')}
                   </Badge>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm font-medium mb-2">Participants</p>
+                <p className="text-sm font-medium mb-2">{t('blocks.participants')}</p>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4" />
                   <span>{blockRewards?.filter(r => r.type === 'participant').length || 0}</span>
                   <Badge variant="secondary">
                     {blockRewards?.filter(r => r.type === 'participant')
-                      .reduce((sum, r) => sum + r.amount, 0) || 0} shared
+                      .reduce((sum, r) => sum + r.amount, 0) || 0} {t('blocks.shared')}
                   </Badge>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-medium">Timestamps</p>
+              <p className="text-sm font-medium">{t('blocks.timestamps')}</p>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>Created:</span>
+                  <span>{t('blocks.created')}:</span>
                   <span className="text-muted-foreground">
                     {new Date(selectedBlock?.createdAt || '').toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  <span>Completed:</span>
+                  <span>{t('blocks.completed')}:</span>
                   <span className="text-muted-foreground">
                     {new Date(selectedBlock?.completedAt || '').toLocaleString()}
                   </span>
