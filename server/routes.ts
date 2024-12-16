@@ -1,10 +1,4 @@
 
-// Добавить в существующие маршруты
-app.get('/api/miners/active', (req, res) => {
-  const activeMiners = Array.from(activeConnections.keys());
-  res.json(activeMiners);
-});
-
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
@@ -28,33 +22,49 @@ export function registerRoutes(app: Express): Server {
 
   // WebSocket upgrade handling
   httpServer.on("upgrade", (request, socket, head) => {
-    // Skip Vite HMR requests
-    if (request.headers["sec-websocket-protocol"] === "vite-hmr") {
-      return;
-    }
+    try {
+      // Skip Vite HMR requests
+      if (request.headers["sec-websocket-protocol"] === "vite-hmr") {
+        return;
+      }
 
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit("connection", ws, request);
-    });
+      // Handle WebSocket connections
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit("connection", ws, request);
+      });
+    } catch (error) {
+      console.error('WebSocket upgrade error:', error);
+      socket.destroy();
+    }
   });
 
-  wss.on("connection", (ws) => {
+  wss.on("connection", (ws, req) => {
+    log(`New WebSocket connection from ${req.socket.remoteAddress}`);
+    
     ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === "register" && data.minerId) {
           const now = new Date();
-          clients.set(data.minerId, { 
+          const client: Client = { 
             ws, 
             minerId: data.minerId,
             connectedAt: now,
             lastActive: now
-          });
+          };
+          clients.set(data.minerId, client);
+          log(`Miner registered: ${data.minerId}`);
           broadcastMiners();
         }
-      } catch (error) {
-        log("WebSocket error:", error);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        log(`WebSocket message error: ${errorMessage}`);
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
       }
+    });
+
+    ws.on("error", (error) => {
+      log(`WebSocket error: ${error.message}`);
     });
 
     ws.on("close", () => {

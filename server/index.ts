@@ -58,9 +58,21 @@ app.use((req, res, next) => {
 
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
-  const PORT = Number(process.env.PORT) || 5000;
+  const PORT = 5000;
+
   server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-    log(`environment: ${app.get("env")}`);
+    log(`Server running at http://0.0.0.0:${PORT}`);
+    log(`Environment: ${app.get("env")}`);
+    log(`Database connected: ${!!process.env.DATABASE_URL}`);
+    log(`WebSocket server initialized`);
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received. Shutting down gracefully...');
+    server.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
   });
 })();
