@@ -15,6 +15,8 @@ interface MiningDashboardProps {
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
   const { mining, currentBlock, startMining, stopMining, onlineMiners, peers, broadcast, totalNetworkProgress, lastProgress } = useMining(userId);
+  const { language } = useThemeLanguage();
+  const t = useTranslation(language);
   const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
   const [peerStatus, setPeerStatus] = useState<Record<string, boolean>>({});
   const [progress, setProgress] = useState(0);
@@ -130,7 +132,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <div className="flex items-center justify-between">
-            <CardTitle>Mining Dashboard</CardTitle>
+            <CardTitle>{t('mining.dashboard')}</CardTitle>
             <SettingsDialog onSettingsChange={(newSettings) => {
               // Применяем новые настройки
               console.log('Settings updated:', newSettings);
@@ -139,14 +141,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <span>{onlineMiners} online</span>
+              <span>{onlineMiners} {t('mining.online')}</span>
             </div>
             <div className="flex items-center gap-2 relative group">
               <div className="relative">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full opacity-20 animate-ping" />
               </div>
-              <span>{peers.length} P2P peers</span>
+              <span>{peers.length} {t('mining.peers')}</span>
 
               {/* Tooltip со списком пиров */}
               <div className="absolute hidden group-hover:block top-full left-0 mt-2 p-2 bg-black/80 backdrop-blur-sm rounded-lg shadow-lg z-10 min-w-[200px]">
