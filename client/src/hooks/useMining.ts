@@ -268,9 +268,10 @@ export function useMining(userId: string) {
   }, [userId]);
 
   useEffect(() => {
-    if (worker) {
+    if (worker && currentBlock) {
       worker.postMessage({
-        blockHash: currentBlock.hash,
+        type: 'start',
+        block: currentBlock,
         difficulty: currentBlock.difficulty
       });
     }
