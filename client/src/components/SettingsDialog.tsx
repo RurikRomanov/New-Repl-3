@@ -16,9 +16,11 @@ import {
 import { Settings } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useToast } from "@/hooks/use-toast";
+import { useThemeLanguage } from "../contexts/ThemeLanguageContext";
+import { useTranslation } from "../lib/translations";
 
 interface SettingsDialogProps {
   onSettingsChange?: (settings: {
@@ -31,13 +33,24 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
+  const { theme, language, setTheme, setLanguage } = useThemeLanguage();
+  const t = useTranslation(language);
+  
   const [settings, setSettings] = useState({
     enableHaptics: true,
     enableNotifications: true,
     enableBackgroundMining: false,
-    language: 'ru' as const,
-    theme: 'dark' as const,
+    language,
+    theme,
   });
+  
+  useEffect(() => {
+    setSettings(prev => ({
+      ...prev,
+      language,
+      theme,
+    }));
+  }, [language, theme]);
 
   const { impactOccurred } = useHapticFeedback();
   const { toast } = useToast();
@@ -160,9 +173,11 @@ export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
             <Button onClick={() => {
               impactOccurred('medium');
               onSettingsChange?.(settings);
+              setTheme(settings.theme);
+              setLanguage(settings.language);
               toast({
-                title: "Settings Saved",
-                description: "Your settings have been applied successfully",
+                title: t('settings.saved'),
+                description: t('settings.savedDescription'),
               });
             }}>
               Apply Settings
