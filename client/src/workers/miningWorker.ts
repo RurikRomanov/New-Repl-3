@@ -12,7 +12,7 @@ const calculateMaxAttempts = (difficulty: number): number => {
 };
 
 self.onmessage = async (e: MessageEvent) => {
-  const { blockHash, difficulty, onlineMiners = 1 } = e.data;
+  const { blockHash, difficulty, onlineMiners = 1, usedHashes = [] } = e.data;
   const target = "0".repeat(difficulty);
   const maxAttempts = calculateMaxAttempts(difficulty);
   
@@ -30,6 +30,10 @@ self.onmessage = async (e: MessageEvent) => {
       const nonceStr = (nonce + i).toString(16).padStart(8, '0');
       const hash = await calculateHash(blockHash, nonceStr);
       
+      if (usedHashes.includes(hash)) {
+        continue; // Пропускаем уже использованные хэши
+      }
+      
       if (hash.startsWith(target)) {
         // Нашли решение
         const timeTaken = (Date.now() - startTime) / 1000;
@@ -45,6 +49,12 @@ self.onmessage = async (e: MessageEvent) => {
         });
         return;
       }
+      
+      // Отправляем использованный хэш в основной поток
+      self.postMessage({
+        type: 'used_hash',
+        hash
+      });
     }
     
     nonce += batchSize;

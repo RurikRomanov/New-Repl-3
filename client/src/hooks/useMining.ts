@@ -14,16 +14,25 @@ export function useMining(userId: string) {
   const [currentHashrate, setCurrentHashrate] = useState(0); // Added state for current hashrate
   const [lastProgress, setLastProgress] = useState<number>(0);
   const [totalNetworkProgress, setTotalNetworkProgress] = useState<number>(0);
+  const [usedHashes, setUsedHashes] = useState<Set<string>>(new Set()); // Add state to track used hashes
   const { toast } = useToast();
-  const { broadcast, peers } = useWebRTC(userId, (data) => {
+  const { broadcast, peers, usedHashes: peerUsedHashes } = useWebRTC(userId, (data) => {
     if (!data) return;
 
     switch (data.type) {
       case 'progress':
         // Handle progress updates from peers
+        setPeerProgress(prev => ({
+          ...prev,
+          [data.peerId]: data.value
+        }));
         break;
       case 'hashrate':
         // Handle hashrate updates from peers
+        setPeerHashrates(prev => ({
+          ...prev,
+          [data.peerId]: data.value
+        }));
         break;
       case 'solution_found':
         // Handle when a peer finds a solution
@@ -33,6 +42,12 @@ export function useMining(userId: string) {
             title: "Block Mined",
             description: "Another miner found the solution"
           });
+        }
+        break;
+      case 'used_hash':
+        // Handle used hash updates from peers
+        if (data.hash) {
+          setUsedHashes(prev => new Set(prev).add(data.hash));
         }
         break;
     }
@@ -119,6 +134,16 @@ export function useMining(userId: string) {
             hashrate: currentHashrate,
             estimatedTimeRemaining,
             lastProgress: workerProgress // Отправляем текущий прогресс как последний сохраненный
+          });
+          break;
+
+        case 'used_hash':
+          // Add the used hash to the local state
+          setUsedHashes(prev => new Set(prev).add(hash));
+          // Broadcast the used hash to peers
+          broadcast({
+            type: 'used_hash',
+            hash
           });
           break;
       }
@@ -269,10 +294,11 @@ export function useMining(userId: string) {
     if (worker) {
       worker.postMessage({
         blockHash: currentBlock.hash,
-        difficulty: currentBlock.difficulty
+        difficulty: currentBlock.difficulty,
+        usedHashes: Array.from(usedHashes) // Send used hashes to the worker
       });
     }
-  }, [worker, currentBlock]);
+  }, [worker, currentBlock, usedHashes]);
 
 
   return {
