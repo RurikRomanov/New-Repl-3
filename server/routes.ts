@@ -1,3 +1,10 @@
+
+// Добавить в существующие маршруты
+app.get('/api/miners/active', (req, res) => {
+  const activeMiners = Array.from(activeConnections.keys());
+  res.json(activeMiners);
+});
+
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";

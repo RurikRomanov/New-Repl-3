@@ -6,9 +6,26 @@ interface PeerConnection {
   dataChannel: RTCDataChannel;
 }
 
-export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
+export function useWebRTC(userId: string, onMessage?: (data: any) => void) {
   const [peers, setPeers] = useState<Map<string, PeerConnection>>(new Map());
+  const [autoConnect, setAutoConnect] = useState(true);
   const { toast } = useToast();
+  
+  // Автоматическое создание P2P соединений
+  useEffect(() => {
+    if (autoConnect) {
+      fetch('/api/miners/active')
+        .then(res => res.json())
+        .then(miners => {
+          miners.forEach((minerId: string) => {
+            if (minerId !== userId && !peers.has(minerId)) {
+              connectToPeer(minerId);
+            }
+          });
+        })
+        .catch(console.error);
+    }
+  }, [autoConnect, userId]);
   
   const createPeerConnection = useCallback(async (targetId: string, isInitiator: boolean) => {
     const config = {
@@ -38,7 +55,7 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'ice',
-            from: minerId,
+            from: userId,
             to: targetId,
             candidate: event.candidate
           })
@@ -53,7 +70,7 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
     });
     
     return pc;
-  }, [minerId]);
+  }, [userId]);
   
   const setupDataChannel = (channel: RTCDataChannel) => {
     channel.onopen = () => {
@@ -129,12 +146,12 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'offer',
-        from: minerId,
+        from: userId,
         to: targetId,
         offer
       })
     });
-  }, [minerId, createPeerConnection]);
+  }, [userId, createPeerConnection]);
   
   const handlePeerSignal = useCallback(async (data: any) => {
     if (data.type === 'offer') {
@@ -148,7 +165,7 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'answer',
-          from: minerId,
+          from: userId,
           to: data.from,
           answer
         })
@@ -164,7 +181,7 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
         await peer.connection.addIceCandidate(data.candidate);
       }
     }
-  }, [peers, minerId, createPeerConnection]);
+  }, [peers, userId, createPeerConnection]);
   
   const broadcast = useCallback((message: any) => {
     const messageStr = JSON.stringify(message);
@@ -229,7 +246,7 @@ export function useWebRTC(minerId: string, onMessage?: (data: any) => void) {
         peer.connection.close();
       });
     };
-  }, [minerId, connectToPeer, handlePeerSignal]);
+  }, [userId, connectToPeer, handlePeerSignal]);
   
   return {
     broadcast,
