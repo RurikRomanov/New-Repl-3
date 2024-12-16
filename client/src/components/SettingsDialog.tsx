@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
+import { useToast } from "@/hooks/use-toast";
 
 interface SettingsDialogProps {
   onSettingsChange?: (settings: {
@@ -39,6 +40,7 @@ export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
   });
 
   const { impactOccurred } = useHapticFeedback();
+  const { toast } = useToast();
 
   const handleSettingChange = (key: keyof typeof settings, value?: any) => {
     impactOccurred('light');
@@ -145,6 +147,27 @@ export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+      <div className="flex justify-end gap-3 pt-4 border-t">
+          <DialogTrigger asChild>
+            <Button variant="outline" onClick={() => {
+              impactOccurred('light');
+            }}>
+              Cancel
+            </Button>
+          </DialogTrigger>
+          <DialogTrigger asChild>
+            <Button onClick={() => {
+              impactOccurred('medium');
+              onSettingsChange?.(settings);
+              toast({
+                title: "Settings Saved",
+                description: "Your settings have been applied successfully",
+              });
+            }}>
+              Apply Settings
+            </Button>
+          </DialogTrigger>
         </div>
       </DialogContent>
     </Dialog>
