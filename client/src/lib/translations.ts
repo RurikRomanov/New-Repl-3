@@ -54,15 +54,47 @@ export const translations: Translations = {
     en: 'No active peers',
     ru: 'Нет активных пиров'
   },
+  'mining.networkHashrate': {
+    en: 'Network Hashrate',
+    ru: 'Хешрейт сети'
+  },
+  'mining.estimatedHashrate': {
+    en: 'Estimated Hashrate',
+    ru: 'Расчетный хешрейт'
+  },
+  'mining.estimatedMiningTime': {
+    en: 'Est. Mining Time',
+    ru: 'Расч. время майнинга'
+  },
+  'mining.peerProgress': {
+    en: 'Peer Progress',
+    ru: 'Прогресс пиров'
+  },
+  'mining.miningStarted': {
+    en: 'Mining Started',
+    ru: 'Майнинг запущен'
+  },
+  'mining.miningStartedDesc': {
+    en: 'Mining process has begun',
+    ru: 'Процесс майнинга начат'
+  },
+  'mining.miningStopped': {
+    en: 'Mining Stopped',
+    ru: 'Майнинг остановлен'
+  },
+  'mining.miningStoppedDesc': {
+    en: 'Mining process has been stopped',
+    ru: 'Процесс майнинга остановлен'
+  },
   'settings.title': {
-    en: 'Settings',
-    ru: 'Настройки'
+    en: 'Mining Settings',
+    ru: 'Настройки майнинга'
   },
   'settings.haptics': {
     en: 'Haptic Feedback',
     ru: 'Тактильный отклик'
   },
-  'settings.hapticsDescription': {
+  'settings.hapticsDesc': {
     en: 'Vibrate on important events',
     ru: 'Вибрация при важных событиях'
   },
@@ -70,7 +102,7 @@ export const translations: Translations = {
     en: 'Notifications',
     ru: 'Уведомления'
   },
-  'settings.notificationsDescription': {
+  'settings.notificationsDesc': {
     en: 'Show mining progress notifications',
     ru: 'Показывать уведомления о прогрессе'
   },
@@ -78,33 +110,17 @@ export const translations: Translations = {
     en: 'Background Mining',
     ru: 'Фоновый майнинг'
   },
-  'settings.backgroundDescription': {
+  'settings.backgroundDesc': {
     en: 'Continue mining when app is in background',
     ru: 'Продолжать майнинг в фоновом режиме'
   },
   'settings.language': {
     en: 'Language',
-    ru: 'Язык'
-  },
-  'settings.languageDescription': {
-    en: 'Choose interface language',
-    ru: 'Выберите язык интерфейса'
+    ru: 'Язык интерфейса'
   },
   'settings.theme': {
     en: 'Theme',
-    ru: 'Тема'
-  },
-  'settings.themeDescription': {
-    en: 'Choose interface theme',
-    ru: 'Выберите тему интерфейса'
-  },
-  'settings.light': {
-    en: 'Light',
-    ru: 'Светлая'
-  },
-  'settings.dark': {
-    en: 'Dark',
-    ru: 'Тёмная'
+    ru: 'Тема оформления'
   },
   'settings.apply': {
     en: 'Apply Settings',
@@ -118,9 +134,37 @@ export const translations: Translations = {
     en: 'Settings Saved',
     ru: 'Настройки сохранены'
   },
-  'settings.savedDescription': {
+  'settings.savedDesc': {
     en: 'Your settings have been applied successfully',
     ru: 'Ваши настройки были успешно применены'
+  },
+  'mining.noActivePeers': {
+    en: 'No active peers',
+    ru: 'Нет активных пиров'
+  },
+  'mining.peerHashrate': {
+    en: 'H/s',
+    ru: 'х/с'
+  },
+  'mining.notEstimatedYet': {
+    en: 'Not estimated yet',
+    ru: 'Еще не рассчитано'
+  },
+  'settings.light': {
+    en: 'Light',
+    ru: 'Светлая'
+  },
+  'settings.dark': {
+    en: 'Dark',
+    ru: 'Тёмная'
+  },
+  'settings.chooseLanguage': {
+    en: 'Choose interface language',
+    ru: 'Выберите язык интерфейса'
+  },
+  'settings.chooseTheme': {
+    en: 'Choose interface theme',
+    ru: 'Выберите тему интерфейса'
   }
 };
 

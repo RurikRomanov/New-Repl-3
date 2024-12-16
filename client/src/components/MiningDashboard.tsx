@@ -169,7 +169,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                     </div>
                   ))}
                   {peers.length === 0 && (
-                    <div className="text-muted-foreground">No active peers</div>
+                    <div className="text-muted-foreground">{t('mining.noActivePeers')}</div>
                   )}
                 </div>
               </div>
@@ -180,14 +180,14 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Current Block</span>
+            <span className="text-sm font-medium">{t('mining.currentBlock')}</span>
             <span className="text-sm text-muted-foreground font-mono">
               {currentBlock?.hash.slice(0, 10)}...
             </span>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium">Difficulty</span>
+            <span className="text-sm font-medium">{t('mining.difficulty')}</span>
             <span className="text-sm text-muted-foreground">
               {currentBlock?.difficulty || 0}
             </span>
@@ -204,8 +204,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                 </div>
                 
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span>Network Hashrate: {(currentHashrate + Object.values(peerHashrates).reduce((sum, rate) => sum + rate, 0)).toFixed(2)} MH/s</span>
-                  <span>Est. Time: {estimatedTime}</span>
+                  <span>{t('mining.networkHashrate')}: {(currentHashrate + Object.values(peerHashrates).reduce((sum, rate) => sum + rate, 0)).toFixed(2)} MH/s</span>
+                  <span>{t('mining.estimatedTime')}: {estimatedTime}</span>
                 </div>
                 <Progress
                   value={totalNetworkProgress}
@@ -286,8 +286,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
               impactOccurred('medium');
               if (mining) {
                 toast({
-                  title: "Mining Stopped",
-                  description: "Mining process has been stopped",
+                  title: t('mining.miningStopped'),
+                  description: t('mining.miningStoppedDesc'),
                   variant: "destructive"
                 });
                 stopMining();
@@ -296,8 +296,8 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
                 }));
               } else {
                 toast({
-                  title: "Mining Started",
-                  description: "Mining process has begun",
+                  title: t('mining.miningStarted'),
+                  description: t('mining.miningStartedDesc'),
                   variant: "default"
                 });
                 startMining();
@@ -308,7 +308,7 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
             }}
             variant={mining ? "destructive" : "default"}
           >
-            {mining ? "Stop Mining" : "Start Mining"}
+            {mining ? t('mining.stopMining') : t('mining.startMining')}
           </Button>
         </div>
       </CardContent>
