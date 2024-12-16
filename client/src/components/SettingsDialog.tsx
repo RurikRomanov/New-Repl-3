@@ -6,16 +6,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Settings } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import { useHapticFeedback } from "../hooks/useHapticFeedback";
 
 interface SettingsDialogProps {
   onSettingsChange?: (settings: {
     enableHaptics: boolean;
     enableNotifications: boolean;
     enableBackgroundMining: boolean;
+    language: 'en' | 'ru';
+    theme: 'light' | 'dark';
   }) => void;
 }
 
@@ -24,12 +34,17 @@ export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
     enableHaptics: true,
     enableNotifications: true,
     enableBackgroundMining: false,
+    language: 'ru' as const,
+    theme: 'dark' as const,
   });
 
-  const handleSettingChange = (key: keyof typeof settings) => {
+  const { impactOccurred } = useHapticFeedback();
+
+  const handleSettingChange = (key: keyof typeof settings, value?: any) => {
+    impactOccurred('light');
     const newSettings = {
       ...settings,
-      [key]: !settings[key],
+      [key]: value !== undefined ? value : !settings[key],
     };
     setSettings(newSettings);
     onSettingsChange?.(newSettings);
@@ -85,6 +100,50 @@ export function SettingsDialog({ onSettingsChange }: SettingsDialogProps) {
               checked={settings.enableBackgroundMining}
               onCheckedChange={() => handleSettingChange("enableBackgroundMining")}
             />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="language" className="flex flex-col">
+              <span>Language / Язык</span>
+              <span className="text-sm text-muted-foreground">
+                Choose interface language
+              </span>
+            </Label>
+            <Select
+              value={settings.language}
+              onValueChange={(value: 'en' | 'ru') =>
+                handleSettingChange('language', value)
+              }
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="ru">Русский</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="theme" className="flex flex-col">
+              <span>Theme / Тема</span>
+              <span className="text-sm text-muted-foreground">
+                Choose interface theme
+              </span>
+            </Label>
+            <Select
+              value={settings.theme}
+              onValueChange={(value: 'light' | 'dark') =>
+                handleSettingChange('theme', value)
+              }
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </DialogContent>
