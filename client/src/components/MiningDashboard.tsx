@@ -13,7 +13,7 @@ interface MiningDashboardProps {
 }
 
 export function MiningDashboard({ userId }: MiningDashboardProps) {
-  const { mining, currentBlock, startMining, stopMining, onlineMiners, peers, broadcast } = useMining(userId);
+  const { mining, currentBlock, startMining, stopMining, onlineMiners, peers, broadcast, totalNetworkProgress, lastProgress } = useMining(userId);
   const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
   const [peerStatus, setPeerStatus] = useState<Record<string, boolean>>({});
   const [progress, setProgress] = useState(0);
@@ -186,18 +186,18 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Your Progress</span>
+                  <span className="text-sm font-medium">Network Progress</span>
                   <span className="text-sm text-muted-foreground">
-                    Boost: x{Object.entries(peerStatus).filter(([_, status]) => status).length + 1}
+                    Network Boost: x{Object.entries(peerStatus).filter(([_, status]) => status).length + 1}
                   </span>
                 </div>
                 
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
-                  <span>Current Hashrate: {currentHashrate.toFixed(2)} MH/s</span>
+                  <span>Network Hashrate: {(currentHashrate + Object.values(peerHashrates).reduce((sum, rate) => sum + rate, 0)).toFixed(2)} MH/s</span>
                   <span>Est. Time: {estimatedTime}</span>
                 </div>
                 <Progress
-                  value={progress}
+                  value={totalNetworkProgress}
                   className="h-2 relative overflow-hidden"
                   style={{
                     background: 'rgba(255,255,255,0.1)',

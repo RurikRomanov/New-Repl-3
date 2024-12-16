@@ -44,6 +44,10 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
       { type: 'module' }
     );
 
+    // Сохраняем последний прогресс для текущего пользователя
+    const [lastProgress, setLastProgress] = useState<number>(0);
+    const [totalNetworkProgress, setTotalNetworkProgress] = useState<number>(0);
+
     miningWorker.onmessage = async (e) => {
       const { type, nonce, progress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
       
@@ -64,8 +68,12 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
               minerId: userId,
               hash,
               nonce,
-              hashRate
+              hashRate,
+              totalProgress: totalNetworkProgress // Отправляем общий прогресс сети
             });
+
+            // Сохраняем прогресс перед остановкой
+            setLastProgress(progress);
           } catch (error) {
             console.error('Mining error:', error);
             toast({
@@ -79,8 +87,15 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
           break;
           
         case 'progress':
+          // Обновляем прогресс текущего майнера
           setProgress(progress);
-          setCurrentHashrate(currentHashrate / 1000000); // Конвертируем в MH/s
+          setLastProgress(progress);
+          setCurrentHashrate(currentHashrate / 1000000);
+
+          // Рассчитываем общий прогресс сети
+          const activeMiners = Object.keys(peerProgress).length + 1;
+          const totalProgress = (Object.values(peerProgress).reduce((sum, p) => sum + p, 0) + progress) / activeMiners;
+          setTotalNetworkProgress(totalProgress);
           
           // Отправляем обновление прогресса и хэшрейта другим майнерам
           broadcast({ 
@@ -88,7 +103,8 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
             progress,
             peerId: userId,
             hashrate: currentHashrate,
-            estimatedTimeRemaining
+            estimatedTimeRemaining,
+            lastProgress: progress // Отправляем текущий прогресс как последний сохраненный
           });
           break;
       }
