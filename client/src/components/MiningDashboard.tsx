@@ -4,6 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { Users } from "lucide-react";
 import { useMining } from "../hooks/useMining";
 import { useState, useEffect, useRef } from "react";
+import { useThemeLanguage } from "../contexts/ThemeLanguageContext";
+import { useTranslation } from "../lib/translations";
 import { SettingsDialog } from "./SettingsDialog";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useWebRTC } from "../hooks/useWebRTC";
