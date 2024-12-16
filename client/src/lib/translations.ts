@@ -22,6 +22,10 @@ export const translations: Translations = {
     en: 'Block #',
     ru: 'Блок №'
   },
+  'blocks.hash': {
+    en: 'Hash',
+    ru: 'Хеш'
+  },
   'blocks.hashShort': {
     en: 'Hash (first 10 chars)',
     ru: 'Хеш (первые 10 символов)'
@@ -81,50 +85,6 @@ export const translations: Translations = {
   'stats.blocksMined': {
     en: 'Blocks Mined',
     ru: 'Добыто блоков'
-  },
-  'blocks.recent': {
-    en: 'Recent Blocks',
-    ru: 'Последние блоки'
-  },
-  'blocks.blockNumber': {
-    en: 'Block #',
-    ru: 'Блок №'
-  },
-  'blocks.hash': {
-    en: 'Hash',
-    ru: 'Хеш'
-  },
-  'blocks.minedBy': {
-    en: 'Mined By',
-    ru: 'Добыто'
-  },
-  'blocks.details': {
-    en: 'Block Details',
-    ru: 'Детали блока'
-  },
-  'blocks.rewards': {
-    en: 'rewards',
-    ru: 'наград'
-  },
-  'blocks.shared': {
-    en: 'shared',
-    ru: 'разделено'
-  },
-  'blocks.participants': {
-    en: 'Participants',
-    ru: 'Участников'
-  },
-  'blocks.timestamps': {
-    en: 'Timestamps',
-    ru: 'Временные метки'
-  },
-  'blocks.created': {
-    en: 'Created',
-    ru: 'Создан'
-  },
-  'blocks.completed': {
-    en: 'Completed',
-    ru: 'Завершён'
   },
   'leaderboard.title': {
     en: 'Leaderboard',
@@ -186,7 +146,7 @@ export const translations: Translations = {
     en: 'P2P peers',
     ru: 'P2P пиры'
   },
-  'mining.noPeers': {
+  'mining.noActivePeers': {
     en: 'No active peers',
     ru: 'Нет активных пиров'
   },
@@ -221,6 +181,14 @@ export const translations: Translations = {
   'mining.miningStoppedDesc': {
     en: 'Mining process has been stopped',
     ru: 'Процесс майнинга остановлен'
+  },
+  'mining.peerHashrate': {
+    en: 'H/s',
+    ru: 'х/с'
+  },
+  'mining.notEstimatedYet': {
+    en: 'Not estimated yet',
+    ru: 'Еще не рассчитано'
   },
   'settings.title': {
     en: 'Mining Settings',
@@ -273,18 +241,6 @@ export const translations: Translations = {
   'settings.savedDesc': {
     en: 'Your settings have been applied successfully',
     ru: 'Ваши настройки были успешно применены'
-  },
-  'mining.noActivePeers': {
-    en: 'No active peers',
-    ru: 'Нет активных пиров'
-  },
-  'mining.peerHashrate': {
-    en: 'H/s',
-    ru: 'х/с'
-  },
-  'mining.notEstimatedYet': {
-    en: 'Not estimated yet',
-    ru: 'Еще не рассчитано'
   },
   'settings.light': {
     en: 'Light',
