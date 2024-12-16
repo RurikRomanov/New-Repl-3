@@ -45,24 +45,34 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
     );
 
     miningWorker.onmessage = async (e) => {
-      const { type, nonce, progress, currentHashrate } = e.data;
+      const { type, nonce, progress, currentHashrate, hashCount, hash, timeTaken, estimatedTimeRemaining } = e.data;
       
       switch (type) {
         case 'solution':
           try {
             await submitSolution(currentBlock.id, nonce, userId);
+            const hashRate = hashCount / timeTaken;
             toast({
-              title: "Block Mined!",
-              description: "You successfully mined a block"
+              title: "Block Mined! 🎉",
+              description: `Successfully mined with ${(hashRate/1000000).toFixed(2)} MH/s`
             });
+            
             // Оповещаем других майнеров о найденном решении
             broadcast({ 
               type: 'solution_found',
               blockId: currentBlock.id,
-              minerId: userId
+              minerId: userId,
+              hash,
+              nonce,
+              hashRate
             });
           } catch (error) {
             console.error('Mining error:', error);
+            toast({
+              title: "Mining Error",
+              description: "Failed to submit solution",
+              variant: "destructive"
+            });
           }
           setMining(false);
           miningWorker.terminate();
@@ -71,12 +81,14 @@ const [peerHashrates, setPeerHashrates] = useState<Record<string, number>>({});
         case 'progress':
           setProgress(progress);
           setCurrentHashrate(currentHashrate / 1000000); // Конвертируем в MH/s
-          // Отправляем обновление прогресса другим майнерам
+          
+          // Отправляем обновление прогресса и хэшрейта другим майнерам
           broadcast({ 
             type: 'progress',
             progress,
             peerId: userId,
-            hashrate: currentHashrate
+            hashrate: currentHashrate,
+            estimatedTimeRemaining
           });
           break;
       }

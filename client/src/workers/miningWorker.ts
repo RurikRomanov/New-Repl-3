@@ -7,9 +7,8 @@ const calculateHash = async (blockHash: string, nonce: string): Promise<string> 
 
 // Рассчитываем максимальное количество попыток на основе сложности
 const calculateMaxAttempts = (difficulty: number): number => {
-  // 2^(difficulty * 4) дает примерное количество попыток для нахождения хэша
-  // Умножаем на 4, так как каждый символ - это 4 бита
-  return Math.pow(2, difficulty * 4);
+  // 2^difficulty дает нам количество попыток для нахождения хэша с нужным количеством нулей
+  return Math.pow(2, difficulty);
 };
 
 self.onmessage = async (e: MessageEvent) => {
@@ -17,41 +16,62 @@ self.onmessage = async (e: MessageEvent) => {
   const target = "0".repeat(difficulty);
   const maxAttempts = calculateMaxAttempts(difficulty);
   
-  let nonce = 0;
-  let lastProgressUpdate = Date.now();
+  let nonce = Math.floor(Math.random() * 1000000); // Случайное начальное значение
+  let hashCount = 0;
+  let startTime = Date.now();
+  let lastProgressUpdate = startTime;
   const progressUpdateInterval = 100; // Интервал обновления прогресса в мс
   
+  const batchSize = 1000; // Количество хэшей в одном батче
+  
   while (true) {
-    const nonceStr = nonce.toString(16).padStart(8, '0');
-    const hash = await calculateHash(blockHash, nonceStr);
-    
-    if (hash.startsWith(target)) {
-      self.postMessage({ 
-        type: 'solution', 
-        nonce: nonceStr,
-        progress: 100 
-      });
-      break;
+    // Обрабатываем батч хэшей
+    for (let i = 0; i < batchSize; i++) {
+      const nonceStr = (nonce + i).toString(16).padStart(8, '0');
+      const hash = await calculateHash(blockHash, nonceStr);
+      
+      if (hash.startsWith(target)) {
+        // Нашли решение
+        const timeTaken = (Date.now() - startTime) / 1000;
+        const finalHashrate = hashCount / timeTaken;
+        
+        self.postMessage({ 
+          type: 'solution', 
+          nonce: nonceStr,
+          hash,
+          hashCount,
+          timeTaken,
+          hashrate: finalHashrate
+        });
+        return;
+      }
     }
     
-    nonce++;
+    nonce += batchSize;
+    hashCount += batchSize;
     
-    // Отправляем обновления прогресса с определенным интервалом
+    // Обновляем прогресс
     const now = Date.now();
     if (now - lastProgressUpdate > progressUpdateInterval) {
-      // Рассчитываем прогресс как процент от предполагаемого количества попыток
-      const progress = Math.min(100, (nonce / maxAttempts) * 100);
+      const timePassed = (now - startTime) / 1000;
+      const currentHashrate = hashCount / timePassed;
+      
+      // Оцениваем прогресс на основе вероятности нахождения решения
+      const probabilityFound = 1 - Math.pow(1 - 1/maxAttempts, hashCount);
+      const progress = Math.min(99.9, probabilityFound * 100); // Никогда не показываем 100% до нахождения решения
       
       self.postMessage({ 
         type: 'progress', 
         progress,
-        currentHashrate: nonce / ((now - lastProgressUpdate) / 1000) // Хэшей в секунду
+        hashCount,
+        currentHashrate,
+        estimatedTimeRemaining: (maxAttempts / currentHashrate) * (1 - probabilityFound)
       });
       
       lastProgressUpdate = now;
       
       // Добавляем небольшую задержку для снижения нагрузки на CPU
-      await new Promise(resolve => setTimeout(resolve, Math.max(10, 50 / onlineMiners)));
+      await new Promise(resolve => setTimeout(resolve, Math.max(5, 20 / onlineMiners)));
     }
   }
 };
