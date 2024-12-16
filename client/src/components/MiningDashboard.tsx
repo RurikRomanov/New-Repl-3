@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Users } from "lucide-react";
 import { useMining } from "../hooks/useMining";
 import { useState, useEffect, useRef } from "react";
+import { SettingsDialog } from "./SettingsDialog";
 import { useHapticFeedback } from "../hooks/useHapticFeedback";
 import { useWebRTC } from "../hooks/useWebRTC";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +129,13 @@ export function MiningDashboard({ userId }: MiningDashboardProps) {
     <Card className="w-full max-w-md mx-auto bg-background/80 backdrop-blur border-muted">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>Mining Dashboard</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Mining Dashboard</CardTitle>
+            <SettingsDialog onSettingsChange={(newSettings) => {
+              // Применяем новые настройки
+              console.log('Settings updated:', newSettings);
+            }} />
+          </div>
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4" />
