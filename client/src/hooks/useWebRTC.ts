@@ -9,6 +9,7 @@ interface PeerConnection {
 export function useWebRTC(userId: string, onMessage?: (data: any) => void) {
   const [peers, setPeers] = useState<Map<string, PeerConnection>>(new Map());
   const [autoConnect, setAutoConnect] = useState(true);
+  const [usedHashes, setUsedHashes] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   
   // Автоматическое создание P2P соединений
@@ -103,6 +104,11 @@ export function useWebRTC(userId: string, onMessage?: (data: any) => void) {
             case 'status':
               if (data.mining !== undefined) {
                 onMessage(data);
+              }
+              break;
+            case 'used_hash':
+              if (data.hash) {
+                setUsedHashes(prev => new Set(prev).add(data.hash));
               }
               break;
           }
@@ -250,6 +256,7 @@ export function useWebRTC(userId: string, onMessage?: (data: any) => void) {
   
   return {
     broadcast,
-    peers: Array.from(peers.keys())
+    peers: Array.from(peers.keys()),
+    usedHashes
   };
 }
